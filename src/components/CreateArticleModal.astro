@@ -252,14 +252,14 @@
     function openModal() {
       console.log('openModal called');
       
-      // ВРЕМЕННО: Отключаем проверку авторизации для тестирования
-      // const user = localStorage.getItem('user');
-      // console.log('User from localStorage:', user);
+      // Проверяем авторизацию
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      console.log('User from localStorage:', user);
       
-      // if (!user) {
-      //   alert('Для публікації статей потрібно увійти в систему через Google');
-      //   return;
-      // }
+      if (!user) {
+        alert('Для публікації статей потрібно увійти в систему через Google');
+        return;
+      }
       
       if (modal) {
         console.log('Opening modal');
@@ -331,6 +331,84 @@
         notification.classList.add('hidden');
       }, timeout);
     }
+  }
+
+  // Функция для показа инструкций с готовым контентом
+  function showArticleInstructions(result) {
+    // Создаем модал с инструкциями
+    const instructionsModal = document.createElement('div');
+    instructionsModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4';
+    instructionsModal.innerHTML = `
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white">Стаття готова до публікації!</h3>
+          <button id="close-instructions" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="mb-4">
+          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Інструкції:</h4>
+          <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
+            ${result.instructions.map(instruction => `<li>${instruction}</li>`).join('')}
+          </ol>
+        </div>
+        
+        <div class="mb-4">
+          <div class="flex justify-between items-center mb-2">
+            <h4 class="font-semibold text-gray-900 dark:text-white">Готовий контент:</h4>
+            <button id="copy-content" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+              Копіювати
+            </button>
+          </div>
+          <textarea id="article-content" readonly class="w-full h-64 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm font-mono text-gray-900 dark:text-white" 
+                    placeholder="Завантаження контенту...">${result.content}</textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button id="close-instructions-btn" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
+            Закрити
+          </button>
+          <button id="copy-and-close" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Копіювати і закрити
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(instructionsModal);
+    
+    // Обработчики событий для модала инструкций
+    const closeInstructions = () => {
+      document.body.removeChild(instructionsModal);
+      closeModal(); // Закрываем основной модал
+    };
+    
+    const copyContent = () => {
+      const textarea = document.getElementById('article-content');
+      textarea.select();
+      document.execCommand('copy');
+      
+      const copyBtn = document.getElementById('copy-content');
+      const originalText = copyBtn.textContent;
+      copyBtn.textContent = 'Скопійовано!';
+      copyBtn.className = 'px-3 py-1 bg-green-600 text-white text-sm rounded';
+      
+      setTimeout(() => {
+        copyBtn.textContent = originalText;
+        copyBtn.className = 'px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700';
+      }, 2000);
+    };
+    
+    document.getElementById('close-instructions').addEventListener('click', closeInstructions);
+    document.getElementById('close-instructions-btn').addEventListener('click', closeInstructions);
+    document.getElementById('copy-content').addEventListener('click', copyContent);
+    document.getElementById('copy-and-close').addEventListener('click', () => {
+      copyContent();
+      setTimeout(closeInstructions, 500);
+    });
   }
 
   // Обработка отправки формы
@@ -419,8 +497,27 @@ ${data.content}
       });
 
       if (response.ok) {
-        showNotification('Стаття успішно створена! Перезапустіть сервер для відображення', true);
-        closeModal();
+        const result = await response.json();
+        
+        if (result.success) {
+          if (result.fileCreated) {
+            // Файл создан локально
+            showNotification(result.message, true);
+            closeModal();
+            
+            // Предлагаем перезагрузить страницу
+            setTimeout(() => {
+              if (confirm('Стаття створена! Перезавантажити сторінку для відображення?')) {
+                window.location.reload();
+              }
+            }, 2000);
+          } else {
+            // Показываем модал с инструкциями и готовым контентом
+            showArticleInstructions(result);
+          }
+        } else {
+          showNotification('Помилка при створенні статті', false);
+        }
       } else {
         const errorData = await response.json();
         showNotification(`Помилка: ${errorData.error || 'Невідома помилка'}`, false);
