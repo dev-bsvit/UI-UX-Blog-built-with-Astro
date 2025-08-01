@@ -44,6 +44,9 @@ const { postSlug } = Astro.props;
         <div class="flex justify-between items-center">
           <div class="text-sm text-gray-500 dark:text-gray-400">
             <span id="user-name-display"></span>
+            <div class="mt-1 text-xs">
+              💡 Коментарі проходять модерацію перед публікацією
+            </div>
           </div>
           <div class="flex space-x-3">
             <button 
@@ -62,6 +65,44 @@ const { postSlug } = Astro.props;
           </div>
         </div>
       </form>
+    </div>
+
+    <!-- Уведомление о модерации -->
+    <div id="moderation-notice" class="hidden mb-6 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+      <div class="flex items-center">
+        <div class="text-2xl mr-3">⏳</div>
+        <div>
+          <h4 class="font-medium text-orange-800 dark:text-orange-200">
+            Коментар надіслано на модерацію
+          </h4>
+          <p class="text-sm text-orange-600 dark:text-orange-300">
+            Ваш коментар з'явиться після перевірки модератором
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin notice -->
+    <div id="admin-notice" class="hidden mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="text-2xl mr-3">🛡️</div>
+          <div>
+            <h4 class="font-medium text-blue-800 dark:text-blue-200">
+              Режим адміністратора
+            </h4>
+            <p class="text-sm text-blue-600 dark:text-blue-300">
+              Ви бачите всі коментарі, включаючи ті, що очікують модерації
+            </p>
+          </div>
+        </div>
+        <a 
+          href="/admin/comments" 
+          class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+        >
+          Панель модерації
+        </a>
+      </div>
     </div>
 
     <!-- Список комментариев -->
@@ -92,14 +133,21 @@ const { postSlug } = Astro.props;
     const userNameDisplay = document.getElementById('user-name-display');
     const cancelButton = document.getElementById('cancel-comment');
     const contentTextarea = document.getElementById('comment-content');
+    const moderationNotice = document.getElementById('moderation-notice');
+    const adminNotice = document.getElementById('admin-notice');
 
     let currentUser = null;
     let comments = [];
+    let isAdmin = false;
 
     // Проверяем авторизацию
     function checkAuth() {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       currentUser = user;
+      
+      // Simple admin check
+      const adminEmails = ['admin@example.com', 'bsvit@example.com'];
+      isAdmin = user && (adminEmails.includes(user.email) || user.email.includes('admin'));
       
       if (user) {
         authRequired?.classList.add('hidden');
@@ -107,9 +155,15 @@ const { postSlug } = Astro.props;
         if (userNameDisplay) {
           userNameDisplay.textContent = `Коментувати як ${user.displayName}`;
         }
+        
+        // Show admin notice if user is admin
+        if (isAdmin) {
+          adminNotice?.classList.remove('hidden');
+        }
       } else {
         authRequired?.classList.remove('hidden');
         commentForm?.classList.add('hidden');
+        adminNotice?.classList.add('hidden');
       }
     }
 
@@ -122,7 +176,14 @@ const { postSlug } = Astro.props;
       const allComments = JSON.parse(localStorage.getItem('comments') || '{}');
       const postComments = allComments[postSlug] || [];
       
-      comments = postComments.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      // Фильтруем комментарии в зависимости от статуса пользователя
+      comments = postComments.filter((comment: any) => {
+        // Админы видят все комментарии
+        if (isAdmin) return true;
+        
+        // Обычные пользователи видят только одобренные комментарии
+        return comment.status === 'approved' || !comment.status; // старые комментарии без статуса считаем одобренными
+      }).sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       
       setTimeout(() => {
         commentsLoading?.classList.add('hidden');
@@ -139,7 +200,7 @@ const { postSlug } = Astro.props;
         commentsList.innerHTML = '';
       } else {
         commentsEmpty?.classList.add('hidden');
-        commentsList.innerHTML = comments.map(comment => renderComment(comment)).join('');
+        commentsList.innerHTML = comments.map((comment: any) => renderComment(comment)).join('');
       }
 
       // Обновляем счетчик
@@ -149,7 +210,7 @@ const { postSlug } = Astro.props;
     }
 
     // Рендерим отдельный комментарий
-    function renderComment(comment) {
+    function renderComment(comment: any) {
       const date = new Date(comment.createdAt).toLocaleDateString('uk-UA', {
         year: 'numeric',
         month: 'long',
@@ -158,8 +219,21 @@ const { postSlug } = Astro.props;
         minute: '2-digit'
       });
 
+      const statusBadge = isAdmin && comment.status ? `
+        <span class="px-2 py-1 rounded-full text-xs font-medium ${
+          comment.status === 'pending' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
+          comment.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+        }">
+          ${comment.status === 'pending' ? '⏳ На модерації' : 
+            comment.status === 'approved' ? '✅ Схвалено' : '❌ Відхилено'}
+        </span>
+      ` : '';
+
       return `
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 ${
+          comment.status === 'pending' ? 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/10' : ''
+        }">
           <div class="flex items-start space-x-4">
             <div class="flex-shrink-0">
               <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
@@ -176,6 +250,7 @@ const { postSlug } = Astro.props;
                 <span class="text-xs text-gray-500 dark:text-gray-400">
                   ${date}
                 </span>
+                ${statusBadge}
               </div>
               <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 ${comment.content}
@@ -198,7 +273,7 @@ const { postSlug } = Astro.props;
     }
 
     // Добавляем новый комментарий
-    async function addComment(content) {
+    async function addComment(content: string) {
       if (!currentUser) {
         alert('Потрібно увійти в систему для додавання коментарів');
         return;
@@ -211,7 +286,7 @@ const { postSlug } = Astro.props;
         authorName: currentUser.displayName,
         authorEmail: currentUser.email,
         createdAt: new Date().toISOString(),
-        approved: true,
+        status: 'pending', // Новые комментарии требуют модерации
         likesCount: 0
       };
 
@@ -223,9 +298,14 @@ const { postSlug } = Astro.props;
       allComments[postSlug].push(newComment);
       localStorage.setItem('comments', JSON.stringify(allComments));
 
-      // Обновляем локальный массив и перерендериваем
-      comments.push(newComment);
-      renderComments();
+      // Показываем уведомление о модерации
+      moderationNotice?.classList.remove('hidden');
+      setTimeout(() => {
+        moderationNotice?.classList.add('hidden');
+      }, 5000);
+
+      // Перезагружаем комментарии
+      loadComments();
 
       // Очищаем форму
       if (contentTextarea) {
@@ -283,7 +363,7 @@ const { postSlug } = Astro.props;
         
         if (isLiked) {
           // Убираем лайк
-          const updatedUserLikes = userLikes.filter(id => id !== commentId);
+          const updatedUserLikes = userLikes.filter((id: string) => id !== commentId);
           const updatedAllLikes = { ...allLikes };
           updatedAllLikes[commentId] = Math.max(0, (updatedAllLikes[commentId] || 0) - 1);
           
@@ -314,6 +394,7 @@ const { postSlug } = Astro.props;
     // Слушаем изменения авторизации
     window.addEventListener('userAuthChanged', () => {
       checkAuth();
+      loadComments(); // Перезагружаем комментарии с учетом новых прав
     });
 
     // Инициализация

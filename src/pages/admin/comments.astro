@@ -1,0 +1,439 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const title = 'Модерація коментарів | Адмін-панель';
+const description = 'Панель для модерації коментарів блогу';
+---
+
+<BaseLayout title={title} description={description}>
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-3xl p-8 mb-8">
+      <h1 class="text-3xl font-bold mb-4">🛡️ Модерація коментарів</h1>
+      <p class="text-lg opacity-90">
+        Керуйте коментарями: схвалюйте, відхиляйте або видаляйте неприйнятний контент
+      </p>
+    </div>
+
+    <!-- Auth Check -->
+    <div id="auth-check" class="text-center py-12">
+      <div class="text-6xl mb-4">🔒</div>
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        Потрібна авторизація
+      </h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
+        Для доступу до панелі модерації увійдіть в систему
+      </p>
+      <button 
+        onclick="window.signInWithGoogle?.()"
+        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+      >
+        Увійти через Google
+      </button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="admin-panel" class="hidden">
+      <!-- Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Всього коментарів</p>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white" id="total-comments">0</p>
+            </div>
+            <div class="text-3xl">💬</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">На модерації</p>
+              <p class="text-2xl font-bold text-orange-600 dark:text-orange-400" id="pending-comments">0</p>
+            </div>
+            <div class="text-3xl">⏳</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Схвалено</p>
+              <p class="text-2xl font-bold text-green-600 dark:text-green-400" id="approved-comments">0</p>
+            </div>
+            <div class="text-3xl">✅</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Відхилено</p>
+              <p class="text-2xl font-bold text-red-600 dark:text-red-400" id="rejected-comments">0</p>
+            </div>
+            <div class="text-3xl">❌</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 mb-8">
+        <div class="flex flex-wrap items-center gap-4">
+          <div class="flex items-center space-x-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Статус:</label>
+            <select id="status-filter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+              <option value="all">Всі</option>
+              <option value="pending">На модерації</option>
+              <option value="approved">Схвалено</option>
+              <option value="rejected">Відхилено</option>
+            </select>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Стаття:</label>
+            <select id="post-filter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+              <option value="all">Всі статті</option>
+            </select>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <input 
+              type="text" 
+              id="search-filter" 
+              placeholder="Пошук по тексту..."
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          <button 
+            id="clear-filters"
+            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            Очистити
+          </button>
+        </div>
+      </div>
+
+      <!-- Comments List -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Коментарі</h2>
+        </div>
+        
+        <div id="comments-list" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- Comments will be loaded here -->
+        </div>
+
+        <div id="no-comments" class="hidden p-12 text-center">
+          <div class="text-6xl mb-4">💭</div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Коментарів не знайдено
+          </h3>
+          <p class="text-gray-600 dark:text-gray-400">
+            Спробуйте змінити фільтри або дочекайтеся нових коментарів
+          </p>
+        </div>
+
+        <div id="loading" class="p-12 text-center">
+          <div class="text-4xl mb-4">⏳</div>
+          <p class="text-gray-600 dark:text-gray-400">Завантаження коментарів...</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const authCheck = document.getElementById('auth-check');
+    const adminPanel = document.getElementById('admin-panel');
+    const commentsList = document.getElementById('comments-list');
+    const loading = document.getElementById('loading');
+    const noComments = document.getElementById('no-comments');
+    
+    // Filters
+    const statusFilter = document.getElementById('status-filter') as HTMLSelectElement;
+    const postFilter = document.getElementById('post-filter') as HTMLSelectElement;
+    const searchFilter = document.getElementById('search-filter') as HTMLInputElement;
+    const clearFilters = document.getElementById('clear-filters');
+
+    let allComments: any[] = [];
+    let filteredComments: any[] = [];
+
+    // Check admin access
+    function checkAdminAccess() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      
+      // Simple admin check - you can enhance this
+      const adminEmails = ['admin@example.com', 'bsvit@example.com']; // Add your admin emails
+      
+      if (user && (adminEmails.includes(user.email) || user.email.includes('admin'))) {
+        authCheck?.classList.add('hidden');
+        adminPanel?.classList.remove('hidden');
+        loadComments();
+        return true;
+      } else if (user) {
+        // User is logged in but not admin
+        if (authCheck) {
+          authCheck.innerHTML = `
+            <div class="text-6xl mb-4">🚫</div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Доступ заборонено
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+              У вас немає прав для доступу до панелі модерації
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">
+              Увійшли як: ${user.displayName} (${user.email})
+            </p>
+          `;
+        }
+        return false;
+      }
+      return false;
+    }
+
+    // Load comments from localStorage
+    function loadComments() {
+      loading?.classList.remove('hidden');
+      noComments?.classList.add('hidden');
+
+      // Get all comments from localStorage
+      const commentsData = JSON.parse(localStorage.getItem('comments') || '{}');
+      allComments = [];
+
+      Object.entries(commentsData).forEach(([postSlug, comments]: [string, any]) => {
+        if (Array.isArray(comments)) {
+          comments.forEach(comment => {
+            allComments.push({
+              ...comment,
+              postSlug,
+              status: comment.status || 'approved' // Default to approved for existing comments
+            });
+          });
+        }
+      });
+
+      // Sort by date (newest first)
+      allComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      // Populate post filter
+      const posts = [...new Set(allComments.map(c => c.postSlug))];
+      if (postFilter) {
+        postFilter.innerHTML = '<option value="all">Всі статті</option>';
+        posts.forEach(postSlug => {
+          const option = document.createElement('option');
+          option.value = postSlug;
+          option.textContent = postSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          postFilter.appendChild(option);
+        });
+      }
+
+      updateStats();
+      applyFilters();
+      loading?.classList.add('hidden');
+    }
+
+    // Update statistics
+    function updateStats() {
+      const total = allComments.length;
+      const pending = allComments.filter(c => c.status === 'pending').length;
+      const approved = allComments.filter(c => c.status === 'approved').length;
+      const rejected = allComments.filter(c => c.status === 'rejected').length;
+
+      document.getElementById('total-comments')!.textContent = total.toString();
+      document.getElementById('pending-comments')!.textContent = pending.toString();
+      document.getElementById('approved-comments')!.textContent = approved.toString();
+      document.getElementById('rejected-comments')!.textContent = rejected.toString();
+    }
+
+    // Apply filters
+    function applyFilters() {
+      filteredComments = allComments.filter(comment => {
+        const statusMatch = statusFilter.value === 'all' || comment.status === statusFilter.value;
+        const postMatch = postFilter.value === 'all' || comment.postSlug === postFilter.value;
+        const searchMatch = !searchFilter.value || 
+          comment.content.toLowerCase().includes(searchFilter.value.toLowerCase()) ||
+          comment.authorName.toLowerCase().includes(searchFilter.value.toLowerCase());
+
+        return statusMatch && postMatch && searchMatch;
+      });
+
+      renderComments();
+    }
+
+    // Render comments
+    function renderComments() {
+      if (!commentsList) return;
+
+      if (filteredComments.length === 0) {
+        commentsList.innerHTML = '';
+        noComments?.classList.remove('hidden');
+        return;
+      }
+
+      noComments?.classList.add('hidden');
+
+      commentsList.innerHTML = filteredComments.map(comment => {
+        const date = new Date(comment.createdAt).toLocaleString('uk-UA');
+        const statusColor = {
+          pending: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+          approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+          rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+        }[comment.status] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+
+        return `
+          <div class="p-6" data-comment-id="${comment.id}">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+                  <span class="text-white font-medium text-sm">
+                    ${comment.authorName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h4 class="font-medium text-gray-900 dark:text-white">${comment.authorName}</h4>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">${comment.authorEmail}</p>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor}">
+                ${comment.status === 'pending' ? 'На модерації' : 
+                  comment.status === 'approved' ? 'Схвалено' : 'Відхилено'}
+              </span>
+            </div>
+
+            <div class="mb-4">
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">${comment.content}</p>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                <span>📄 ${comment.postSlug.replace(/-/g, ' ')}</span>
+                <span class="mx-2">•</span>
+                <span>📅 ${date}</span>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                ${comment.status !== 'approved' ? `
+                  <button 
+                    class="approve-btn px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition-colors"
+                    data-comment-id="${comment.id}"
+                  >
+                    ✅ Схвалити
+                  </button>
+                ` : ''}
+                
+                ${comment.status !== 'rejected' ? `
+                  <button 
+                    class="reject-btn px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+                    data-comment-id="${comment.id}"
+                  >
+                    ❌ Відхилити
+                  </button>
+                ` : ''}
+                
+                <button 
+                  class="delete-btn px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
+                  data-comment-id="${comment.id}"
+                >
+                  🗑️ Видалити
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Add event listeners
+      commentsList.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = (e.target as HTMLElement).dataset.commentId;
+          if (commentId) moderateComment(commentId, 'approved');
+        });
+      });
+
+      commentsList.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = (e.target as HTMLElement).dataset.commentId;
+          if (commentId) moderateComment(commentId, 'rejected');
+        });
+      });
+
+      commentsList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = (e.target as HTMLElement).dataset.commentId;
+          if (commentId && confirm('Ви впевнені, що хочете видалити цей коментар?')) {
+            deleteComment(commentId);
+          }
+        });
+      });
+    }
+
+    // Moderate comment
+    function moderateComment(commentId: string, status: 'approved' | 'rejected') {
+      const commentsData = JSON.parse(localStorage.getItem('comments') || '{}');
+      let updated = false;
+
+      Object.keys(commentsData).forEach(postSlug => {
+        if (Array.isArray(commentsData[postSlug])) {
+          commentsData[postSlug] = commentsData[postSlug].map((comment: any) => {
+            if (comment.id === commentId) {
+              comment.status = status;
+              updated = true;
+            }
+            return comment;
+          });
+        }
+      });
+
+      if (updated) {
+        localStorage.setItem('comments', JSON.stringify(commentsData));
+        loadComments();
+        
+        const message = status === 'approved' ? 'Коментар схвалено' : 'Коментар відхилено';
+        window.showNotification?.(message, true);
+      }
+    }
+
+    // Delete comment
+    function deleteComment(commentId: string) {
+      const commentsData = JSON.parse(localStorage.getItem('comments') || '{}');
+      let updated = false;
+
+      Object.keys(commentsData).forEach(postSlug => {
+        if (Array.isArray(commentsData[postSlug])) {
+          const originalLength = commentsData[postSlug].length;
+          commentsData[postSlug] = commentsData[postSlug].filter((comment: any) => comment.id !== commentId);
+          if (commentsData[postSlug].length < originalLength) {
+            updated = true;
+          }
+        }
+      });
+
+      if (updated) {
+        localStorage.setItem('comments', JSON.stringify(commentsData));
+        loadComments();
+        window.showNotification?.('Коментар видалено', true);
+      }
+    }
+
+    // Event listeners
+    statusFilter?.addEventListener('change', applyFilters);
+    postFilter?.addEventListener('change', applyFilters);
+    searchFilter?.addEventListener('input', applyFilters);
+    
+    clearFilters?.addEventListener('click', () => {
+      statusFilter.value = 'all';
+      postFilter.value = 'all';
+      searchFilter.value = '';
+      applyFilters();
+    });
+
+    // Listen for auth changes
+    window.addEventListener('userAuthChanged', checkAdminAccess);
+
+    // Initial check
+    checkAdminAccess();
+  });
+</script> 
