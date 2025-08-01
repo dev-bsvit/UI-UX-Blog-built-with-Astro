@@ -252,14 +252,14 @@
     function openModal() {
       console.log('openModal called');
       
-      // Проверяем авторизацию
-      const user = localStorage.getItem('user');
-      console.log('User from localStorage:', user);
+      // ВРЕМЕННО: Отключаем проверку авторизации для тестирования
+      // const user = localStorage.getItem('user');
+      // console.log('User from localStorage:', user);
       
-      if (!user) {
-        alert('Для публікації статей потрібно увійти в систему через Google');
-        return;
-      }
+      // if (!user) {
+      //   alert('Для публікації статей потрібно увійти в систему через Google');
+      //   return;
+      // }
       
       if (modal) {
         console.log('Opening modal');
