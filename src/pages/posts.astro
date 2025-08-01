@@ -3,38 +3,331 @@ import { getCollection } from 'astro:content';
 import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
 import PostCard from '../components/PostCard.astro';
 
-// Отримуємо всі пости
-const allPosts = await getCollection('posts');
+// Получаем все посты
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 
-// Сортуємо пости за датою (найновіші спочатку)
-const sortedPosts = allPosts.sort((a, b) =>
+// Сортируем посты по дате (новые сначала)
+const sortedPosts = allPosts.sort((a, b) => 
   new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
 );
+
+// Группируем посты по категориям
+const postsByCategory = sortedPosts.reduce((acc, post) => {
+  const category = post.data.category || 'Загальне';
+  if (!acc[category]) {
+    acc[category] = [];
+  }
+  acc[category].push(post);
+  return acc;
+}, {} as Record<string, typeof sortedPosts>);
+
+// Получаем уникальные теги
+const allTags = [...new Set(sortedPosts.flatMap(post => post.data.tags || []))];
 ---
 
-<LayoutWithSidebar
-  title="Статті"
-  description="Всі статті блогу про UI/UX дизайн"
+<LayoutWithSidebar 
+  title="Всі статті | UI/UX Блог" 
+  description="Перегляньте всі статті нашого блогу про UI/UX дизайн, веб-розробку та сучасні технології" 
   currentPath="/posts"
 >
-  <div>
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        Всі статті
+  <!-- Hero секция -->
+  <section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-3xl p-8 mb-8">
+    <div class="max-w-4xl">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
+        Всі статті блогу 📚
       </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Знайдіть найкращі матеріали про UI/UX дизайн, дослідження та доступність
+      <p class="text-xl mb-6 opacity-90">
+        Знайдіть цікаві статті про дизайн, UX-дослідження, розробку та багато іншого. Всього статей: {sortedPosts.length}
       </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#latest" class="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+          Останні статті
+        </a>
+        <a href="#categories" class="border border-white/30 px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors">
+          За категоріями
+        </a>
+      </div>
     </div>
-    
-    <!-- Статті -->
-    <div class="grid grid-cols-1 gap-4">
-      {sortedPosts.map((post) => (
-        <PostCard
-          post={post}
-          featured={post.data.featured}
+  </section>
+
+  <!-- Фильтры и поиск -->
+  <div class="mb-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div class="flex flex-wrap gap-2">
+        <button class="filter-btn active px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 font-medium" data-filter="all">
+          Всі ({sortedPosts.length})
+        </button>
+        {Object.entries(postsByCategory).map(([category, posts]) => (
+          <button 
+            class="filter-btn px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-700" 
+            data-filter={category.toLowerCase()}
+          >
+            {category} ({posts.length})
+          </button>
+        ))}
+      </div>
+      
+      <div class="relative">
+        <input 
+          type="text" 
+          id="search-input"
+          placeholder="Пошук статей..."
+          class="w-full md:w-80 px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
         />
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Теги -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Теги:</span>
+      {allTags.slice(0, 10).map(tag => (
+        <button 
+          class="tag-btn px-3 py-1 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-300 transition-colors"
+          data-tag={tag}
+        >
+          #{tag}
+        </button>
       ))}
+      {allTags.length > 10 && (
+        <button class="px-3 py-1 text-xs text-purple-600 dark:text-purple-400 hover:underline">
+          +{allTags.length - 10} більше
+        </button>
+      )}
     </div>
   </div>
-</LayoutWithSidebar> 
+
+  <!-- Результаты поиска -->
+  <div id="search-results" class="hidden mb-6">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+      Результати пошуку: <span id="search-term"></span>
+    </h2>
+    <div id="search-posts" class="grid grid-cols-1 gap-4">
+      <!-- Результаты поиска будут вставлены здесь -->
+    </div>
+  </div>
+
+  <!-- Все статьи -->
+  <div id="all-posts">
+    <h2 id="posts-title" class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Останні статті</h2>
+    
+    <div id="posts-grid" class="grid grid-cols-1 gap-4">
+      {sortedPosts.map((post) => (
+        <div class="post-item" data-category={post.data.category?.toLowerCase() || 'загальне'} data-tags={JSON.stringify(post.data.tags || [])}>
+          <PostCard post={post} />
+        </div>
+      ))}
+    </div>
+
+    <!-- Пагинация (пока простая) -->
+    <div id="pagination" class="mt-12 flex justify-center">
+      <div class="flex items-center space-x-2">
+        <button class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 disabled:opacity-50" disabled>
+          ← Попередня
+        </button>
+        <span class="px-4 py-2 bg-purple-600 text-white rounded-lg">1</span>
+        <button class="px-4 py-2 text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 disabled:opacity-50" disabled>
+          Наступна →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Статистика -->
+  <div class="mt-12 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Статистика блогу</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{sortedPosts.length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Статей</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{Object.keys(postsByCategory).length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Категорій</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{allTags.length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Тегів</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">∞</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Ідей</div>
+      </div>
+    </div>
+  </div>
+</LayoutWithSidebar>
+
+<script define:vars={{ allPosts: sortedPosts }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const tagButtons = document.querySelectorAll('.tag-btn');
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    const allPostsSection = document.getElementById('all-posts');
+    const postsGrid = document.getElementById('posts-grid');
+    const postsTitle = document.getElementById('posts-title');
+    const searchTerm = document.getElementById('search-term');
+    const searchPosts = document.getElementById('search-posts');
+
+    let currentFilter = 'all';
+    let currentTag = '';
+    let searchQuery = '';
+
+    // Фильтрация по категориям
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const filter = button.dataset.filter;
+        
+        // Обновляем активную кнопку
+        filterButtons.forEach(btn => {
+          btn.classList.remove('active', 'bg-purple-100', 'dark:bg-purple-900', 'text-purple-800', 'dark:text-purple-200');
+          btn.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+        });
+        
+        button.classList.add('active', 'bg-purple-100', 'dark:bg-purple-900', 'text-purple-800', 'dark:text-purple-200');
+        button.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+        
+        currentFilter = filter;
+        filterPosts();
+        
+        // Обновляем заголовок
+        if (postsTitle) {
+          postsTitle.textContent = filter === 'all' ? 'Всі статті' : `Категорія: ${button.textContent.split(' (')[0]}`;
+        }
+      });
+    });
+
+    // Фильтрация по тегам
+    tagButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tag = button.dataset.tag;
+        
+        // Переключаем активное состояние
+        if (currentTag === tag) {
+          currentTag = '';
+          button.classList.remove('bg-purple-100', 'dark:bg-purple-900', 'text-purple-600', 'dark:text-purple-300');
+          button.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-400');
+        } else {
+          // Убираем активное состояние с других тегов
+          tagButtons.forEach(btn => {
+            btn.classList.remove('bg-purple-100', 'dark:bg-purple-900', 'text-purple-600', 'dark:text-purple-300');
+            btn.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-400');
+          });
+          
+          currentTag = tag;
+          button.classList.add('bg-purple-100', 'dark:bg-purple-900', 'text-purple-600', 'dark:text-purple-300');
+          button.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-400');
+        }
+        
+        filterPosts();
+      });
+    });
+
+    // Поиск
+    let searchTimeout;
+    searchInput?.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        
+        if (searchQuery) {
+          showSearchResults();
+        } else {
+          hideSearchResults();
+        }
+      }, 300);
+    });
+
+    // Функция фильтрации постов
+    function filterPosts() {
+      const postItems = document.querySelectorAll('.post-item');
+      
+      postItems.forEach(item => {
+        const category = item.dataset.category;
+        const tags = JSON.parse(item.dataset.tags || '[]');
+        
+        let showPost = true;
+        
+        // Фильтр по категории
+        if (currentFilter !== 'all' && category !== currentFilter) {
+          showPost = false;
+        }
+        
+        // Фильтр по тегу
+        if (currentTag && !tags.includes(currentTag)) {
+          showPost = false;
+        }
+        
+        if (showPost) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    // Функция поиска
+    function showSearchResults() {
+      const results = allPosts.filter(post => {
+        const title = post.data.title.toLowerCase();
+        const description = (post.data.description || post.data.excerpt || '').toLowerCase();
+        const tags = (post.data.tags || []).join(' ').toLowerCase();
+        
+        return title.includes(searchQuery) || 
+               description.includes(searchQuery) || 
+               tags.includes(searchQuery);
+      });
+
+      if (searchTerm) {
+        searchTerm.textContent = `"${searchInput.value}"`;
+      }
+
+      if (searchPosts) {
+        if (results.length === 0) {
+          searchPosts.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">Нічого не знайдено</p>';
+        } else {
+          searchPosts.innerHTML = results.map(post => `
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 transition-colors">
+              <div class="flex items-start space-x-4">
+                ${post.data.cover ? `
+                  <img src="${post.data.cover}" alt="${post.data.title}" class="w-24 h-24 object-cover rounded-lg flex-shrink-0">
+                ` : ''}
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                    <a href="/posts/${post.slug}" class="hover:text-purple-600 dark:hover:text-purple-400">
+                      ${post.data.title}
+                    </a>
+                  </h3>
+                  <p class="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
+                    ${post.data.description || post.data.excerpt || ''}
+                  </p>
+                  <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                    <span>${post.data.readingTime}</span>
+                    <span>•</span>
+                    <span>${post.data.category}</span>
+                    ${post.data.tags && post.data.tags.length > 0 ? `
+                      <span>•</span>
+                      <div class="flex flex-wrap gap-1">
+                        ${post.data.tags.slice(0, 3).map(tag => `<span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">#${tag}</span>`).join('')}
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      searchResults?.classList.remove('hidden');
+      allPostsSection?.classList.add('hidden');
+    }
+
+    function hideSearchResults() {
+      searchResults?.classList.add('hidden');
+      allPostsSection?.classList.remove('hidden');
+    }
+  });
+</script> 
