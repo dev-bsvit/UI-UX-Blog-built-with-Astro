@@ -14,35 +14,61 @@
 </button>
 
 <script>
-  // Переключение темы
-  const themeToggle = document.getElementById('theme-toggle');
-  const darkIcon = document.getElementById('theme-toggle-dark-icon');
-  const lightIcon = document.getElementById('theme-toggle-light-icon');
-
-  // Проверяем сохраненную тему или системные настройки
-  if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-    darkIcon?.classList.add('hidden');
-    lightIcon?.classList.remove('hidden');
-  } else {
-    document.documentElement.classList.remove('dark');
-    darkIcon?.classList.remove('hidden');
-    lightIcon?.classList.add('hidden');
-  }
-
-  function toggleTheme() {
+  // Функция для обновления иконок
+  function updateIcons() {
+    const darkIcon = document.getElementById('theme-toggle-dark-icon');
+    const lightIcon = document.getElementById('theme-toggle-light-icon');
+    
     if (document.documentElement.classList.contains('dark')) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('color-theme', 'light');
-      darkIcon?.classList.remove('hidden');
-      lightIcon?.classList.add('hidden');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('color-theme', 'dark');
       darkIcon?.classList.add('hidden');
       lightIcon?.classList.remove('hidden');
+    } else {
+      darkIcon?.classList.remove('hidden');
+      lightIcon?.classList.add('hidden');
     }
   }
 
-  themeToggle?.addEventListener('click', toggleTheme);
+  // Функция для переключения темы
+  function toggleTheme() {
+    // Переключаем тему
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('color-theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('color-theme', 'dark');
+    }
+
+    // Обновляем иконки
+    updateIcons();
+
+    // Отправляем событие об изменении темы
+    window.dispatchEvent(new CustomEvent('theme-changed', {
+      detail: { theme: document.documentElement.classList.contains('dark') ? 'dark' : 'light' }
+    }));
+  }
+
+  // Инициализация при загрузке страницы
+  document.addEventListener('DOMContentLoaded', () => {
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle?.addEventListener('click', toggleTheme);
+    updateIcons();
+  });
+
+  // Слушаем изменения темы от других компонентов
+  window.addEventListener('theme-changed', () => {
+    updateIcons();
+  });
+
+  // Слушаем изменения системной темы
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!('color-theme' in localStorage)) {
+      if (e.matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      updateIcons();
+    }
+  });
 </script> 
