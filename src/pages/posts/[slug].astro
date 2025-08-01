@@ -43,12 +43,17 @@ const publishedDate = new Date(post.data.publishedAt).toLocaleDateString('uk-UA'
 <BaseLayout 
   title={title}
   description={description}
+  image={post.data.cover}
   canonicalURL={canonicalURL}
-  ogImage={ogImage}
   article={true}
+  author={post.data.author?.name}
+  publishedAt={post.data.publishedAt}
+  modifiedAt={post.data.modifiedAt}
+  tags={tags}
+  category={post.data.category}
 >
   <main class="max-w-4xl mx-auto px-4 py-8">
-    <!-- Хлебные крошки -->
+    <!-- Breadcrumbs -->
     <nav class="text-sm text-gray-600 dark:text-gray-400 mb-6">
       <a href="/" class="hover:text-purple-600 dark:hover:text-purple-400">Головна</a>
       <span class="mx-2">→</span>
@@ -57,78 +62,85 @@ const publishedDate = new Date(post.data.publishedAt).toLocaleDateString('uk-UA'
       <span class="text-gray-900 dark:text-white">{post.data.title}</span>
     </nav>
 
-    <article class="prose prose-lg dark:prose-invert max-w-none">
-      <!-- Заголовок статьи -->
-      <header class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          {post.data.title}
-        </h1>
+    <article class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div class="p-8 md:p-12">
+        <header class="mb-8">
+          <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            {post.data.title}
+          </h1>
+          
+          <!-- Мета информация -->
+          <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6">
+            <time datetime={post.data.publishedAt}>
+              {publishedDate}
+            </time>
+            <span>•</span>
+            <span>{post.data.readingTime}</span>
+            <span>•</span>
+            <span class="views-count">0 переглядів</span>
+            {post.data.category && (
+              <>
+                <span>•</span>
+                <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
+                  {post.data.category}
+                </span>
+              </>
+            )}
+          </div>
+
+          <!-- Теги -->
+          {tags.length > 0 && (
+            <div class="flex flex-wrap gap-2 mb-6">
+              {tags.map(tag => (
+                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <!-- Обложка -->
+          {post.data.cover && (
+            <div class="mb-8">
+              <img 
+                src={post.data.cover} 
+                alt={post.data.title}
+                class="w-full h-64 object-cover rounded-lg"
+                loading="eager"
+              />
+            </div>
+          )}
+        </header>
+
+        <!-- Контент статьи -->
+        <div class="prose prose-lg dark:prose-invert max-w-none">
+          <Content />
+        </div>
         
-        <!-- Мета информация -->
-        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6">
-          <time datetime={post.data.publishedAt}>
-            {publishedDate}
-          </time>
-          <span>•</span>
-          <span>{post.data.readingTime}</span>
-          <span>•</span>
-          <span class="views-count">0 переглядів</span>
-        </div>
+        <!-- Действия с постом -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center space-x-4">
+            <button 
+              class="like-button flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              data-post-slug={post.slug}
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+              <span class="likes-count">0</span>
+            </button>
 
-        <!-- Теги -->
-        {tags.length > 0 && (
-          <div class="flex flex-wrap gap-2 mb-6">
-            {tags.map((tag: string) => (
-              <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm">
-                #{tag}
-              </span>
-            ))}
+            <button 
+              class="bookmark-button flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              data-post-slug={post.slug}
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+              </svg>
+              <span class="bookmarks-count">0</span>
+            </button>
           </div>
-        )}
 
-        <!-- Обложка -->
-        {post.data.cover && (
-          <div class="mb-8">
-            <img 
-              src={post.data.cover} 
-              alt={post.data.title}
-              class="w-full h-64 object-cover rounded-lg"
-            />
-          </div>
-        )}
-      </header>
-
-      <!-- Контент статьи -->
-      <div class="prose prose-lg dark:prose-invert max-w-none">
-        <Content />
-      </div>
-      
-      <!-- Кнопки взаимодействия -->
-      <div class="flex items-center justify-between mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex items-center space-x-4">
-          <button 
-            class="like-button flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            data-post-slug={post.slug}
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-            </svg>
-            <span class="likes-count">0</span>
-          </button>
-
-          <button 
-            class="bookmark-button flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            data-post-slug={post.slug}
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-            </svg>
-            <span>Зберегти</span>
-          </button>
-        </div>
-
-        <div class="flex items-center space-x-4">
-          <!-- Поделиться -->
           <button 
             class="share-button flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
             data-url={canonicalURL}
@@ -174,7 +186,7 @@ const publishedDate = new Date(post.data.publishedAt).toLocaleDateString('uk-UA'
     
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) {
-      alert('Для лайков нужно войти в систему');
+      alert('Для лайків нужно войти в систему');
       return;
     }
     
