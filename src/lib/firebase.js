@@ -29,11 +29,14 @@ export const signInWithGoogle = async () => {
 };
 
 // Функция для выхода
-export const logOut = async () => {
+export const signOutGoogle = async () => {
   try {
     await signOut(auth);
   } catch (error) {
     console.error('Ошибка выхода:', error);
     throw error;
   }
-}; 
+};
+
+// Для обратной совместимости
+export const logOut = signOutGoogle; 
