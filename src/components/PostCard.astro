@@ -363,6 +363,7 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
           return;
         }
 
+        // Пользователь авторизован - показываем полное состояние
         const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
         const isBookmarked = userBookmarks.includes(postSlug);
         const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
@@ -381,7 +382,7 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
         bookmarksCount.textContent = totalBookmarks;
       }
 
-      // Обновляем состояние при клике
+      // Обработчик клика
       button.addEventListener('click', () => {
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         
@@ -410,7 +411,7 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
         localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedUserBookmarks));
         localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
 
-        // Обновляем все кнопки закладок на странице
+        // Обновляем все кнопки закладок
         updateAllBookmarkButtons();
       });
 
@@ -419,7 +420,7 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
     });
   }
 
-  // Обновляем все кнопки закладок на странице
+  // Обновление всех кнопок закладок
   function updateAllBookmarkButtons() {
     const bookmarkButtons = document.querySelectorAll('.bookmark-button');
     const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -435,7 +436,15 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
         return;
       }
 
-      if (user) {
+      if (!user) {
+        // Пользователь не авторизован
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        bookmarksCount.textContent = totalBookmarks;
+        bookmarkIcon.style.fill = 'none';
+        bookmarkIcon.style.stroke = 'currentColor';
+        button.classList.remove('bookmarked');
+      } else {
+        // Пользователь авторизован
         const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
         const isBookmarked = userBookmarks.includes(postSlug);
         const totalBookmarks = allBookmarks[postSlug] || 0;
@@ -451,13 +460,6 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
         }
 
         bookmarksCount.textContent = totalBookmarks;
-      } else {
-        // Пользователь не авторизован
-        const totalBookmarks = allBookmarks[postSlug] || 0;
-        bookmarksCount.textContent = totalBookmarks;
-        bookmarkIcon.style.fill = 'none';
-        bookmarkIcon.style.stroke = 'currentColor';
-        button.classList.remove('bookmarked');
       }
     });
   }
