@@ -371,6 +371,9 @@
           <button id="close-instructions-btn" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
             Закрити
           </button>
+          <button id="download-file" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+            Завантажити файл
+          </button>
           <button id="copy-and-close" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
             Копіювати і закрити
           </button>
@@ -402,9 +405,35 @@
       }, 2000);
     };
     
+    const downloadFile = () => {
+      const content = result.content;
+      const filename = result.slug + '.mdx';
+      
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      const downloadBtn = document.getElementById('download-file');
+      const originalText = downloadBtn.textContent;
+      downloadBtn.textContent = 'Завантажено!';
+      downloadBtn.className = 'px-4 py-2 bg-green-600 text-white rounded';
+      
+      setTimeout(() => {
+        downloadBtn.textContent = originalText;
+        downloadBtn.className = 'px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700';
+      }, 2000);
+    };
+    
     document.getElementById('close-instructions').addEventListener('click', closeInstructions);
     document.getElementById('close-instructions-btn').addEventListener('click', closeInstructions);
     document.getElementById('copy-content').addEventListener('click', copyContent);
+    document.getElementById('download-file').addEventListener('click', downloadFile);
     document.getElementById('copy-and-close').addEventListener('click', () => {
       copyContent();
       setTimeout(closeInstructions, 500);
@@ -482,46 +511,21 @@ seo:
 ${data.content}
 `;
 
-      // Отправляем данные на сервер
-      const response = await fetch('/api/create-article', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          slug,
-          content: frontmatter,
-          title: data.title,
-          description: data.description
-        })
+      // Вместо API запроса - сразу показываем готовый контент
+      showArticleInstructions({
+        success: true,
+        fileCreated: false,
+        message: 'Article data prepared successfully',
+        slug,
+        content: frontmatter,
+        instructions: [
+          '1. Натисніть "Завантажити файл" або скопіюйте контент',
+          '2. Помістіть файл в папку src/content/posts/ вашого проекту',
+          '3. Перезапустіть сервер розробки (npm run dev)',
+          '4. Ваша стаття з\'явиться на сайті!',
+          '5. Не забудьте додати зображення в public/images/posts/ (якщо потрібно)'
+        ]
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        
-        if (result.success) {
-          if (result.fileCreated) {
-            // Файл создан локально
-            showNotification(result.message, true);
-            closeModal();
-            
-            // Предлагаем перезагрузить страницу
-            setTimeout(() => {
-              if (confirm('Стаття створена! Перезавантажити сторінку для відображення?')) {
-                window.location.reload();
-              }
-            }, 2000);
-          } else {
-            // Показываем модал с инструкциями и готовым контентом
-            showArticleInstructions(result);
-          }
-        } else {
-          showNotification('Помилка при створенні статті', false);
-        }
-      } else {
-        const errorData = await response.json();
-        showNotification(`Помилка: ${errorData.error || 'Невідома помилка'}`, false);
-      }
       
     } catch (error) {
       console.error('Error:', error);
