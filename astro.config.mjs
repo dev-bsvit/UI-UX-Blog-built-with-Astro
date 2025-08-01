@@ -8,13 +8,8 @@ export default defineConfig({
   integrations: [tailwind(), mdx()],
   output: 'hybrid',
   adapter: vercel(),
-  site: 'https://ui-ux-blog-bsvit.vercel.app', // Обновленное имя проекта
+  site: 'https://ui-ux-blog-bsvit.vercel.app',
   build: {
     assets: '_astro'
-  },
-  vite: {
-    define: {
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
-    }
   }
 }); 
