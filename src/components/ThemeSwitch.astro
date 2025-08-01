@@ -62,7 +62,7 @@
 
   // Слушаем изменения системной темы
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!('color-theme' in localStorage)) {
+    if (!localStorage.getItem('color-theme')) {
       if (e.matches) {
         document.documentElement.classList.add('dark');
       } else {

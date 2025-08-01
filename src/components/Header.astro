@@ -106,49 +106,24 @@ import AuthButton from './AuthButton.astro';
 </header>
 
 <script>
-  // Переключение темы
-  const themeToggle = document.getElementById('theme-toggle');
-  const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-  const darkIcon = document.getElementById('theme-toggle-dark-icon');
-  const lightIcon = document.getElementById('theme-toggle-light-icon');
-  const darkIconMobile = document.getElementById('theme-toggle-dark-icon-mobile');
-  const lightIconMobile = document.getElementById('theme-toggle-light-icon-mobile');
-
-  // Проверяем сохраненную тему или системные настройки
-  if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-    darkIcon?.classList.add('hidden');
-    lightIcon?.classList.remove('hidden');
-    darkIconMobile?.classList.add('hidden');
-    lightIconMobile?.classList.remove('hidden');
-  } else {
-    document.documentElement.classList.remove('dark');
-    darkIcon?.classList.remove('hidden');
-    lightIcon?.classList.add('hidden');
-    darkIconMobile?.classList.remove('hidden');
-    lightIconMobile?.classList.add('hidden');
-  }
-
-  function toggleTheme() {
-    if (document.documentElement.classList.contains('dark')) {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('color-theme', 'light');
-      darkIcon?.classList.remove('hidden');
-      lightIcon?.classList.add('hidden');
-      darkIconMobile?.classList.remove('hidden');
-      lightIconMobile?.classList.add('hidden');
-    } else {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('color-theme', 'dark');
-      darkIcon?.classList.add('hidden');
-      lightIcon?.classList.remove('hidden');
-      darkIconMobile?.classList.add('hidden');
-      lightIconMobile?.classList.remove('hidden');
-    }
-  }
-
-  themeToggle?.addEventListener('click', toggleTheme);
-  themeToggleMobile?.addEventListener('click', toggleTheme);
+  // Обработчики для кнопок публикации статей
+  document.addEventListener('DOMContentLoaded', () => {
+    const openModalBtn = document.getElementById('open-create-modal');
+    const openModalMobileBtn = document.getElementById('open-create-modal-mobile');
+    
+    // Обработчики клика для кнопок публикации
+    openModalBtn?.addEventListener('click', () => {
+      if (window.openModal) {
+        window.openModal();
+      }
+    });
+    
+    openModalMobileBtn?.addEventListener('click', () => {
+      if (window.openModal) {
+        window.openModal();
+      }
+    });
+  });
 </script>
 
 <style>

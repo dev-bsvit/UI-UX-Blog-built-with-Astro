@@ -87,6 +87,10 @@
     }
   });
 
+  // Глобальные функции для использования в других компонентах
+  window.signInWithGoogle = signInWithGoogle;
+  window.signOutGoogle = signOutGoogle;
+
   // Проверяем состояние при загрузке страницы
   const storedUser = localStorage.getItem('user');
   if (storedUser) {
@@ -95,5 +99,10 @@
     userInfoDiv?.classList.remove('hidden');
     if (userAvatar) userAvatar.src = user.photoURL || '';
     if (userName) userName.textContent = user.displayName || 'User';
+    
+    // Отправляем событие для обновления UI
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('userAuthChanged', { detail: { user } }));
+    }, 100);
   }
 </script> 
