@@ -1,9 +1,9 @@
 ---
 export interface Props {
-  currentPath: string;
+  currentPath?: string;
 }
 
-const { currentPath } = Astro.props;
+const { currentPath = '' } = Astro.props;
 
 const menuItems = [
   { href: '/', label: 'Лента', icon: '🏠', active: currentPath === '/' },

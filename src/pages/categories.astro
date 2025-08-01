@@ -2,79 +2,86 @@
 import { getCollection } from 'astro:content';
 import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
 
-// Отримуємо всі пости
-const allPosts = await getCollection('posts');
+const posts = await getCollection('posts');
 
-// Групуємо пости за категоріями
-const categories = allPosts.reduce((acc, post) => {
+// Группируем посты по категориям
+const postsByCategory = posts.reduce((acc, post) => {
   const category = post.data.category;
   if (!acc[category]) {
     acc[category] = [];
   }
   acc[category].push(post);
   return acc;
-}, {} as Record<string, typeof allPosts>);
+}, {} as Record<string, typeof posts>);
 
-const categoryColors = {
+const categories = Object.keys(postsByCategory);
+
+// Цвета для категорий
+const categoryColors: Record<string, string> = {
   'Дизайн': 'bg-blue-500',
   'Дослідження': 'bg-green-500',
   'Доступність': 'bg-purple-500',
-  'Розробка': 'bg-orange-500',
+  'Розробка': 'bg-orange-500'
+};
+
+const seo = {
+  title: 'Категорії | UI/UX Блог',
+  description: 'Переглядайте статті за категоріями: дизайн, дослідження, доступність та розробка',
+  image: '/og-image.jpg'
 };
 ---
 
-<LayoutWithSidebar
-  title="Категорії"
-  description="Статті за категоріями"
-  currentPath="/categories"
->
-  <div>
+<LayoutWithSidebar seo={seo}>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
         Категорії
       </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Знайдіть статті за цікавими вам темами
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Знайдіть статті за темами, які вас цікавлять
       </p>
     </div>
-    
-    <!-- Категорії -->
+
     <div class="grid gap-6">
-      {Object.entries(categories).map(([categoryName, posts]) => (
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      {categories.map(categoryName => (
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div class="flex items-center mb-4">
             <span class={`w-3 h-3 rounded-full mr-3 ${categoryColors[categoryName] || 'bg-gray-500'}`}></span>
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
               {categoryName}
             </h2>
             <span class="ml-auto text-sm text-gray-500 dark:text-gray-400">
-              {posts.length} {posts.length === 1 ? 'стаття' : 'статей'}
+              {postsByCategory[categoryName].length} статей
             </span>
           </div>
           
-          <div class="space-y-3">
-            {posts.slice(0, 3).map((post) => (
-              <a 
-                href={`/posts/${post.slug}`}
-                class="block p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
+          <div class="grid gap-4">
+            {postsByCategory[categoryName].slice(0, 3).map(post => (
+              <article class="border-l-4 border-gray-200 dark:border-gray-700 pl-4">
                 <h3 class="font-medium text-gray-900 dark:text-white mb-1">
-                  {post.data.title}
+                  <a href={`/posts/${post.slug}`} class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    {post.data.title}
+                  </a>
                 </h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                  {post.data.excerpt || post.data.description}
+                  {post.data.description}
                 </p>
-              </a>
+                <div class="flex items-center mt-2 text-xs text-gray-500 dark:text-gray-500">
+                  <span>{post.data.author.name}</span>
+                  <span class="mx-2">•</span>
+                  <span>{post.data.readingTime}</span>
+                </div>
+              </article>
             ))}
           </div>
           
-          {posts.length > 3 && (
+          {postsByCategory[categoryName].length > 3 && (
             <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <a 
                 href={`/categories/${categoryName.toLowerCase()}`}
-                class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-medium"
+                class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium transition-colors"
               >
-                Показати всі {posts.length} статей →
+                Переглянути всі статті в категорії →
               </a>
             </div>
           )}

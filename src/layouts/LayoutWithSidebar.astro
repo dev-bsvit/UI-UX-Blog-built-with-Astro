@@ -27,7 +27,7 @@ const isHomePage = currentPath === '/';
       <!-- Левый сайдбар -->
       <div class="w-[260px] flex-shrink-0 sticky top-24 h-fit">
         <aside class="w-[260px]">
-          <Sidebar />
+          <Sidebar currentPath={Astro.url.pathname} />
         </aside>
       </div>
       
