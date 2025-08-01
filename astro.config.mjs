@@ -8,7 +8,7 @@ export default defineConfig({
   integrations: [tailwind(), mdx()],
   output: 'hybrid',
   adapter: vercel(),
-  site: 'https://your-blog-name.vercel.app', // ЗАМЕНИТЕ на ваш реальный Vercel домен
+  site: 'https://ui-ux-blog-bsvit.vercel.app', // Обновленное имя проекта
   build: {
     assets: '_astro'
   },
