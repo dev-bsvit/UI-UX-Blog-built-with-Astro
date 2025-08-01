@@ -3,10 +3,10 @@ import { getCollection } from 'astro:content';
 import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
 import PostCard from '../components/PostCard.astro';
 
-// Отримуємо всі пости
-const allPosts = await getCollection('posts');
+// Получаем все посты
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 
-// Сортуємо пости за датою (найновіші спочатку)
+// Сортируем посты за датой (найновіші спочатку)
 const sortedPosts = allPosts.sort((a, b) => 
   new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
 );
@@ -15,171 +15,121 @@ const sortedPosts = allPosts.sort((a, b) =>
 const popularPosts = sortedPosts.filter(post => post.data.featured);
 ---
 
-<LayoutWithSidebar
-  title="UI/UX Блог"
-  description="Сучасний блог про UI/UX дизайн, інтерфейси та користувацький досвід"
-  currentPath="/"
->
-  <!-- Контент сторінки -->
-  <div>
+<LayoutWithSidebar title="UI/UX Блог - Головна" description="Блог про UI/UX дизайн, веб-розробку та сучасні технології" currentPath="/">
+  <!-- Hero секция -->
+  <section class="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-3xl p-8 mb-8">
+    <div class="max-w-4xl">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">
+        Ласкаво просимо до UI/UX блогу! 👋
+      </h1>
+      <p class="text-xl mb-6 opacity-90">
+        Тут ви знайдете найсвіжіші статті про дизайн, UX-дослідження, доступність та сучасні тренди у веб-розробці.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#latest" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+          Читати статті
+        </a>
+        <a href="/about" class="border border-white/30 px-6 py-3 rounded-lg font-medium hover:bg-white/10 transition-colors">
+          Про блог
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Навигация по категориям -->
+  <div class="flex flex-wrap gap-2 mb-8">
+    <button class="tab-button active px-4 py-2 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 font-medium" data-tab="latest">
+      Останні
+    </button>
+    <button class="tab-button px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-700" data-tab="popular">
+      Популярні
+    </button>
+    <button class="tab-button px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-700" data-tab="design">
+      Дизайн
+    </button>
+    <button class="tab-button px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-200 dark:hover:bg-gray-700" data-tab="research">
+      Дослідження
+    </button>
+  </div>
+
+  <!-- Контент вкладок -->
+  <div id="latest" class="tab-content">
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Останні статті</h2>
     <!-- Статті -->
     <div class="grid grid-cols-1 gap-4">
       {sortedPosts.map((post) => (
-        <PostCard
-          post={post}
-          featured={post.data.featured}
-        />
+        <PostCard post={post} />
+      ))}
+    </div>
+  </div>
+
+  <div id="popular" class="tab-content hidden">
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Популярні статті</h2>
+    <div class="grid grid-cols-1 gap-4">
+      {popularPosts.length > 0 ? (
+        popularPosts.map((post) => (
+          <PostCard post={post} />
+        ))
+      ) : (
+        <p class="text-gray-600 dark:text-gray-400 text-center py-8">
+          Поки що немає популярних статей
+        </p>
+      )}
+    </div>
+  </div>
+
+  <div id="design" class="tab-content hidden">
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Статті про дизайн</h2>
+    <div class="grid grid-cols-1 gap-4">
+      {sortedPosts.filter(post => post.data.category === 'Design').map((post) => (
+        <PostCard post={post} />
+      ))}
+    </div>
+  </div>
+
+  <div id="research" class="tab-content hidden">
+    <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">UX дослідження</h2>
+    <div class="grid grid-cols-1 gap-4">
+      {sortedPosts.filter(post => post.data.category === 'Research').map((post) => (
+        <PostCard post={post} />
       ))}
     </div>
   </div>
 </LayoutWithSidebar>
 
 <script>
-  // Function to clear corrupted bookmark data (temporary for debugging)
-  function clearBookmarksData() {
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (user) {
-      localStorage.removeItem('user_bookmarks_' + user.uid);
-    }
-    localStorage.removeItem('all_bookmarks');
-    console.log('Bookmarks data cleared');
-    location.reload();
-  }
-  (window as any).clearBookmarksData = clearBookmarksData;
+  // Переключение вкладок
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
 
-  // Function to show notifications
-  function showNotification(message: string, isSuccess: boolean = true) {
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 text-white';
-    if (isSuccess) {
-      notification.classList.add('bg-green-500');
-    } else {
-      notification.classList.add('bg-red-500');
-    }
-    const icon = document.createElement('svg');
-    icon.className = 'w-5 h-5';
-    icon.setAttribute('fill', 'none');
-    icon.setAttribute('stroke', 'currentColor');
-    icon.setAttribute('viewBox', '0 0 24 24');
-    const path = document.createElement('path');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('stroke-linejoin', 'round');
-    path.setAttribute('stroke-width', '2');
-    if (isSuccess) {
-      path.setAttribute('d', 'M5 13l4 4L19 7');
-    } else {
-      path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
-    }
-    icon.appendChild(path);
-    const span = document.createElement('span');
-    span.textContent = message;
-    notification.appendChild(icon);
-    notification.appendChild(span);
-    document.body.appendChild(notification);
-    setTimeout(function() {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 3000);
-  }
-
-  // Initialize Bookmarks
-  function initializeBookmarks() {
-    console.log('Initializing bookmarks on homepage...');
-    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
-    
-    bookmarkButtons.forEach(button => {
-      const postSlug = button.getAttribute('data-post-slug');
-      if (!postSlug) return;
-      
-      // Click handler for bookmark buttons
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
         
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        if (!user) {
-          showNotification('Будь ласка, увійдіть для використання закладок', false);
-          return;
+        // Убираем активный класс со всех кнопок
+        tabButtons.forEach(btn => {
+          btn.classList.remove('active', 'bg-purple-100', 'dark:bg-purple-900', 'text-purple-800', 'dark:text-purple-200');
+          btn.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+        });
+        
+        // Добавляем активный класс к выбранной кнопке
+        button.classList.add('active', 'bg-purple-100', 'dark:bg-purple-900', 'text-purple-800', 'dark:text-purple-200');
+        button.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+        
+        // Скрываем все вкладки
+        tabContents.forEach(content => {
+          content.classList.add('hidden');
+        });
+        
+        // Показываем выбранную вкладку
+        const activeTab = document.getElementById(tabId);
+        if (activeTab) {
+          activeTab.classList.remove('hidden');
         }
-        
-        const userBookmarksKey = `user_bookmarks_${user.uid}`;
-        const userBookmarks = JSON.parse(localStorage.getItem(userBookmarksKey) || '[]');
-        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
-        
-        let updatedUserBookmarks;
-        let updatedAllBookmarks = { ...allBookmarks };
-        
-        if (userBookmarks.includes(postSlug)) {
-          // Remove bookmark
-          updatedUserBookmarks = userBookmarks.filter((slug: string) => slug !== postSlug);
-          updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 0) - 1);
-          showNotification('Закладку видалено');
-        } else {
-          // Add bookmark
-          updatedUserBookmarks = [...userBookmarks, postSlug];
-          updatedAllBookmarks[postSlug] = (updatedAllBookmarks[postSlug] || 0) + 1;
-          showNotification('Додано до закладок');
-        }
-        
-        // Save to localStorage
-        localStorage.setItem(userBookmarksKey, JSON.stringify(updatedUserBookmarks));
-        localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
-        
-        // Update UI
-        updateAllBookmarkButtons();
       });
     });
-    
-    // Initial update
-    updateAllBookmarkButtons();
-  }
-
-  // Update all bookmark buttons on the page
-  function updateAllBookmarkButtons() {
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
-    
-    document.querySelectorAll('.bookmark-button').forEach(button => {
-      const postSlug = button.getAttribute('data-post-slug');
-      if (!postSlug) return;
-      
-      const bookmarkIcon = button.querySelector('.bookmark-icon') as HTMLElement;
-      const bookmarksCount = button.querySelector('.bookmarks-count');
-      
-      if (bookmarksCount) {
-        const totalBookmarks = allBookmarks[postSlug] || 0;
-        bookmarksCount.textContent = totalBookmarks.toString();
-      }
-      
-      if (user && bookmarkIcon) {
-        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
-        if (userBookmarks.includes(postSlug)) {
-          bookmarkIcon.style.fill = '#3b82f6';
-          bookmarkIcon.style.stroke = '#3b82f6';
-        } else {
-          bookmarkIcon.style.fill = 'none';
-          bookmarkIcon.style.stroke = 'currentColor';
-        }
-      }
-    });
-  }
-
-  // Initialize on DOMContentLoaded
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded - initializing bookmarks...');
-    initializeBookmarks();
   });
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loading - initializing...');
-      initializeBookmarks();
-    });
-  } else {
-    console.log('DOM already loaded - initializing immediately...');
-    initializeBookmarks();
-  }
 </script>
 
  

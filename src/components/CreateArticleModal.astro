@@ -2,254 +2,143 @@
 // CreateArticleModal.astro
 ---
 
-<div id="create-article-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-    <!-- Header -->
-    <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+<!-- Модальное окно для создания статьи -->
+<div id="createArticleModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Створити статтю</h2>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
-        </div>
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Створити нову статтю</h2>
+        </button>
       </div>
-      <button id="close-modal" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
 
-    <!-- Content -->
-    <div class="max-h-[calc(90vh-140px)] overflow-y-auto">
-      <form id="article-form" class="p-6 space-y-6">
-        <!-- Заголовок статьи -->
+      <form id="articleForm" class="space-y-4">
         <div>
-          <label for="article-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Заголовок статті *
           </label>
-          <input
-            type="text"
-            id="article-title"
-            name="title"
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
             required
-            placeholder="Введіть заголовок статті..."
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Введіть заголовок статті"
           />
         </div>
 
-        <!-- Описание -->
         <div>
-          <label for="article-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Опис статті *
+          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Короткий опис
           </label>
-          <textarea
-            id="article-description"
-            name="description"
-            required
-            rows="3"
-            placeholder="Короткий опис статті..."
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+          <textarea 
+            id="description" 
+            name="description" 
+            rows="2"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Короткий опис статті"
           ></textarea>
         </div>
 
-        <!-- Контент статьи -->
         <div>
-          <label for="article-content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Контент статті *
           </label>
-          <textarea
-            id="article-content"
-            name="content"
+          <textarea 
+            id="content" 
+            name="content" 
+            rows="8" 
             required
-            rows="10"
-            placeholder="Напишіть вашу статтю тут... Ви можете використовувати Markdown."
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="Введіть контент статті в форматі Markdown"
           ></textarea>
         </div>
 
-        <!-- Ряд с категорией и тегами -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Категория -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label for="article-category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Категорія *
+            <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Теги
             </label>
-            <select
-              id="article-category"
+            <input 
+              type="text" 
+              id="tags" 
+              name="tags"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="дизайн, ux, ui (через кому)"
+            />
+          </div>
+
+          <div>
+            <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Категорія
+            </label>
+            <select 
+              id="category" 
               name="category"
-              required
-              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              <option value="">Оберіть категорію</option>
-              <option value="Дизайн">Дизайн</option>
-              <option value="Дослідження">Дослідження</option>
-              <option value="Доступність">Доступність</option>
-              <option value="Розробка">Розробка</option>
-              <option value="Тренди">Тренди</option>
+              <option value="Design">Дизайн</option>
+              <option value="Research">Дослідження</option>
+              <option value="Development">Розробка</option>
+              <option value="Tools">Інструменти</option>
+              <option value="General">Загальне</option>
             </select>
           </div>
-
-          <!-- Время чтения -->
-          <div>
-            <label for="article-reading-time" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Час читання
-            </label>
-            <input
-              type="text"
-              id="article-reading-time"
-              name="readingTime"
-              placeholder="5 хв читання"
-              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </div>
         </div>
 
-        <!-- Теги -->
         <div>
-          <label for="article-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Теги *
+          <label for="cover" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            URL обкладинки
           </label>
-          <input
-            type="text"
-            id="article-tags"
-            name="tags"
-            required
-            placeholder="Введіть теги через кому: Дизайн, UI, UX"
-            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+          <input 
+            type="url" 
+            id="cover" 
+            name="cover"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="https://example.com/image.jpg"
           />
         </div>
 
-        <!-- Автор -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="author-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Ім'я автора
-            </label>
-            <input
-              type="text"
-              id="author-name"
-              name="authorName"
-              placeholder="Ваше ім'я"
-              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </div>
-          <div>
-            <label for="author-bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Про автора
-            </label>
-            <input
-              type="text"
-              id="author-bio"
-              name="authorBio"
-              placeholder="Короткий опис автора"
-              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </div>
-        </div>
-
-        <!-- Обложка статьи -->
-        <div>
-          <label for="article-cover" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Обкладинка статті
-          </label>
-          <div class="flex items-center space-x-4">
-            <div 
-              id="cover-preview" 
-              class="w-32 h-20 bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <div class="text-center">
-                <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Завантажити</p>
-              </div>
-            </div>
-            <input
-              type="file" 
-              id="article-cover" 
-              name="coverImage"
-              accept="image/*"
-              class="hidden"
-            />
-            <div class="flex-1">
-              <p class="text-sm text-gray-600 dark:text-gray-400">Рекомендований розмір: 1200x630px</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG або WebP до 5MB</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Рекомендуемая статья -->
-        <div class="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            id="article-featured"
-            name="featured"
-            class="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
-          />
-          <label for="article-featured" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Рекомендована стаття
-          </label>
-        </div>
-
-        <!-- Кнопки -->
-        <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="button"
-            id="cancel-article"
-            class="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        <div class="flex justify-end space-x-4 pt-4">
+          <button 
+            type="button" 
+            id="cancelButton"
+            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
           >
             Скасувати
           </button>
-          <button
+          <button 
             type="submit"
-            class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 font-medium"
+            class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
           >
-            Опублікувати статтю
+            Опублікувати
           </button>
         </div>
       </form>
-    </div>
-  </div>
-</div>
 
-<!-- Уведомления -->
-<div id="notification" class="fixed top-4 right-4 z-60 hidden">
-  <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-    </svg>
-    <span id="notification-message">Стаття успішно створена!</span>
+      <!-- Результат создания статьи -->
+      <div id="articleResult" class="hidden mt-6 p-4 border rounded-lg">
+        <h3 class="font-bold mb-2">Результат створення статті:</h3>
+        <div id="resultContent"></div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-  // Ждем полной загрузки DOM
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing modal');
-    
-    // Открытие модального окна
-    const openModalBtn = document.getElementById('open-create-modal');
-    const openModalMobileBtn = document.getElementById('open-create-modal-mobile');
-    const modal = document.getElementById('create-article-modal');
-    const closeModalBtn = document.getElementById('close-modal');
-    const cancelBtn = document.getElementById('cancel-article');
-    const form = document.getElementById('article-form');
-    const notification = document.getElementById('notification');
-    const notificationMessage = document.getElementById('notification-message');
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('createArticleModal');
+    const form = document.getElementById('articleForm');
+    const closeModalBtn = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelButton');
+    const resultDiv = document.getElementById('articleResult');
+    const resultContent = document.getElementById('resultContent');
 
-    console.log('Modal elements found:', {
-      openModalBtn: !!openModalBtn,
-      openModalMobileBtn: !!openModalMobileBtn,
-      modal: !!modal,
-      closeModalBtn: !!closeModalBtn,
-      cancelBtn: !!cancelBtn,
-      form: !!form
-    });
-
-    // Функция для открытия модального окна
-    function openModal() {
+    // Функция для открытия модала
+    window.openModal = function() {
       console.log('openModal called');
       
       // Проверяем авторизацию
@@ -262,153 +151,141 @@
       }
       
       if (modal) {
-        console.log('Opening modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-      } else {
-        console.error('Modal element not found');
+      }
+    };
+
+    // Функция для закрытия модала
+    function closeModal() {
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        form?.reset();
+        resultDiv?.classList.add('hidden');
       }
     }
 
-    // Открыть модальное окно (десктоп и мобильная кнопки)
-    openModalBtn?.addEventListener('click', (e) => {
-      console.log('Desktop button clicked');
-      e.preventDefault();
-      openModal();
-    });
-    
-    openModalMobileBtn?.addEventListener('click', (e) => {
-      console.log('Mobile button clicked');
-      e.preventDefault();
-      openModal();
-    });
-
-    // Закрыть модальное окно
-    function closeModal() {
-      console.log('closeModal called');
-      modal?.classList.add('hidden');
-      document.body.style.overflow = 'auto';
-      form?.reset();
-    }
-
+    // Обработчики закрытия модала
     closeModalBtn?.addEventListener('click', closeModal);
     cancelBtn?.addEventListener('click', closeModal);
-
-    // Закрытие по клику вне модального окна
+    
     modal?.addEventListener('click', (e) => {
       if (e.target === modal) {
         closeModal();
       }
     });
 
-    // Закрытие по Escape
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !modal?.classList.contains('hidden')) {
-        closeModal();
+    // Обработка отправки формы
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form as HTMLFormElement);
+      const data = {
+        title: formData.get('title') as string,
+        content: formData.get('content') as string,
+        excerpt: formData.get('description') as string,
+        tags: (formData.get('tags') as string)?.split(',').map(tag => tag.trim()).filter(tag => tag),
+        category: formData.get('category') as string,
+        coverImage: formData.get('cover') as string
+      };
+
+      try {
+        console.log('Sending data to API:', data);
+
+        // Отправляем данные на API endpoint
+        const response = await fetch('/api/posts/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log('API response:', result);
+
+        if (response.ok && result.success) {
+          // Показываем результат
+          resultDiv?.classList.remove('hidden');
+          
+          if (result.filePath) {
+            // Файл успешно создан
+            if (resultContent) {
+              resultContent.innerHTML = `
+                <div class="text-green-600 dark:text-green-400">
+                  <p class="font-medium">✅ Статья успешно создана!</p>
+                  <p class="text-sm mt-2">Файл: ${result.filePath}</p>
+                  <p class="text-sm">Slug: ${result.slug}</p>
+                  <p class="text-sm mt-2 text-gray-600 dark:text-gray-400">
+                    Статья будет доступна после перезапуска сервера разработки.
+                  </p>
+                </div>
+              `;
+            }
+            
+            // Закрываем модал через 3 секунды
+            setTimeout(() => {
+              closeModal();
+              // Перезагружаем страницу для отображения новой статьи
+              window.location.reload();
+            }, 3000);
+            
+          } else if (result.downloadContent) {
+            // Показываем контент для скачивания
+            if (resultContent) {
+              resultContent.innerHTML = `
+                <div class="text-blue-600 dark:text-blue-400">
+                  <p class="font-medium">📄 Статья подготовлена для скачивания</p>
+                  <div class="mt-4">
+                    <h4 class="font-medium mb-2">Инструкции:</h4>
+                    <ol class="list-decimal list-inside text-sm space-y-1">
+                      ${result.instructions.map((instruction: string) => `<li>${instruction}</li>`).join('')}
+                    </ol>
+                  </div>
+                  <div class="mt-4">
+                    <button onclick="downloadFile('${result.fileName}', \`${result.downloadContent.replace(/`/g, '\\`')}\`)" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                      Скачать файл
+                    </button>
+                  </div>
+                  <details class="mt-4">
+                    <summary class="cursor-pointer text-sm text-gray-600 dark:text-gray-400">Показать содержимое файла</summary>
+                    <pre class="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs overflow-x-auto">${result.downloadContent}</pre>
+                  </details>
+                </div>
+              `;
+            }
+          }
+        } else {
+          // Показываем ошибку
+          if (resultContent) {
+            resultContent.innerHTML = `
+              <div class="text-red-600 dark:text-red-400">
+                <p class="font-medium">❌ Ошибка при создании статьи</p>
+                <p class="text-sm mt-2">${result.error || 'Неизвестная ошибка'}</p>
+              </div>
+            `;
+          }
+          resultDiv?.classList.remove('hidden');
+        }
+
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        if (resultContent) {
+          resultContent.innerHTML = `
+            <div class="text-red-600 dark:text-red-400">
+              <p class="font-medium">❌ Ошибка отправки</p>
+              <p class="text-sm mt-2">Проверьте подключение к интернету и попробуйте снова.</p>
+            </div>
+          `;
+        }
+        resultDiv?.classList.remove('hidden');
       }
     });
 
-  // Показать уведомление
-  function showNotification(message, isSuccess = true) {
-    if (notificationMessage && notification) {
-      notificationMessage.textContent = message;
-      
-      // Изменяем цвет в зависимости от типа
-      const notificationDiv = notification.querySelector('div');
-      if (notificationDiv) {
-        if (isSuccess) {
-          notificationDiv.className = 'bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 max-w-md';
-        } else {
-          notificationDiv.className = 'bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 max-w-md';
-        }
-      }
-      
-      notification.classList.remove('hidden');
-      
-      // Увеличиваем время для инструкций
-      const timeout = message.includes('Збережіть файл') ? 15000 : 5000;
-      setTimeout(() => {
-        notification.classList.add('hidden');
-      }, timeout);
-    }
-  }
-
-  // Функция для показа инструкций с готовым контентом
-  function showArticleInstructions(result) {
-    // Создаем модал с инструкциями
-    const instructionsModal = document.createElement('div');
-    instructionsModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4';
-    instructionsModal.innerHTML = `
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-900 dark:text-white">Стаття готова до публікації!</h3>
-          <button id="close-instructions" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
-        </div>
-        
-        <div class="mb-4">
-          <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Інструкції:</h4>
-          <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600 dark:text-gray-300">
-            ${result.instructions.map(instruction => `<li>${instruction}</li>`).join('')}
-          </ol>
-        </div>
-        
-        <div class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h4 class="font-semibold text-gray-900 dark:text-white">Готовий контент:</h4>
-            <button id="copy-content" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-              Копіювати
-            </button>
-          </div>
-          <textarea id="article-content" readonly class="w-full h-64 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm font-mono text-gray-900 dark:text-white" 
-                    placeholder="Завантаження контенту...">${result.content}</textarea>
-        </div>
-        
-        <div class="flex justify-end space-x-3">
-          <button id="close-instructions-btn" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">
-            Закрити
-          </button>
-          <button id="download-file" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
-            Завантажити файл
-          </button>
-          <button id="copy-and-close" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-            Копіювати і закрити
-          </button>
-        </div>
-      </div>
-    `;
-    
-    document.body.appendChild(instructionsModal);
-    
-    // Обработчики событий для модала инструкций
-    const closeInstructions = () => {
-      document.body.removeChild(instructionsModal);
-      closeModal(); // Закрываем основной модал
-    };
-    
-    const copyContent = () => {
-      const textarea = document.getElementById('article-content');
-      textarea.select();
-      document.execCommand('copy');
-      
-      const copyBtn = document.getElementById('copy-content');
-      const originalText = copyBtn.textContent;
-      copyBtn.textContent = 'Скопійовано!';
-      copyBtn.className = 'px-3 py-1 bg-green-600 text-white text-sm rounded';
-      
-      setTimeout(() => {
-        copyBtn.textContent = originalText;
-        copyBtn.className = 'px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700';
-      }, 2000);
-    };
-    
-    const downloadFile = () => {
-      const content = result.content;
-      const filename = result.slug + '.mdx';
-      
+    // Функция для скачивания файла
+    window.downloadFile = function(filename: string, content: string) {
       const blob = new Blob([content], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -418,160 +295,17 @@
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      
-      const downloadBtn = document.getElementById('download-file');
-      const originalText = downloadBtn.textContent;
-      downloadBtn.textContent = 'Завантажено!';
-      downloadBtn.className = 'px-4 py-2 bg-green-600 text-white rounded';
-      
-      setTimeout(() => {
-        downloadBtn.textContent = originalText;
-        downloadBtn.className = 'px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700';
-      }, 2000);
     };
-    
-    document.getElementById('close-instructions').addEventListener('click', closeInstructions);
-    document.getElementById('close-instructions-btn').addEventListener('click', closeInstructions);
-    document.getElementById('copy-content').addEventListener('click', copyContent);
-    document.getElementById('download-file').addEventListener('click', downloadFile);
-    document.getElementById('copy-and-close').addEventListener('click', () => {
-      copyContent();
-      setTimeout(closeInstructions, 500);
-    });
-  }
-
-  // Обработка отправки формы
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn?.textContent;
-    
-    // Показываем состояние загрузки
-    if (submitBtn) {
-      submitBtn.textContent = 'Створюємо...';
-      submitBtn.disabled = true;
-    }
-    
-    try {
-      const formData = new FormData(form);
-      
-      // Собираем данные в объект
-      const data = {
-        title: formData.get('title'),
-        description: formData.get('description'),
-        content: formData.get('content'),
-        category: formData.get('category'),
-        tags: formData.get('tags'),
-        readingTime: formData.get('readingTime') || '5 хв читання',
-        authorName: formData.get('authorName') || 'Автор блогу',
-        authorBio: formData.get('authorBio') || 'Автор статей блогу',
-        featured: formData.get('featured') === 'on'
-      };
-      
-      // Валидация
-      if (!data.title || !data.description || !data.content || !data.category || !data.tags) {
-        showNotification('Заповніть всі обов\'язкові поля', false);
-        return;
-      }
-      
-      // Создаем slug из заголовка
-      const slug = data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9а-я\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .trim();
-      
-      // Парсим теги
-      const tagsArray = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      
-      // Текущая дата
-      const now = new Date();
-      const publishedAt = now.toISOString().split('T')[0];
-      
-      // Создаем frontmatter
-      const frontmatter = `---
-title: "${data.title.replace(/"/g, '\\"')}"
-description: "${data.description.replace(/"/g, '\\"')}"
-publishedAt: "${publishedAt}"
-author:
-  name: "${data.authorName.replace(/"/g, '\\"')}"
-  bio: "${data.authorBio.replace(/"/g, '\\"')}"
-excerpt: "${data.description.replace(/"/g, '\\"')}"
-tags: [${tagsArray.map(tag => `"${tag.replace(/"/g, '\\"')}"`).join(', ')}]
-category: "${data.category.replace(/"/g, '\\"')}"
-readingTime: "${data.readingTime.replace(/"/g, '\\"')}"
-featured: ${data.featured}
-seo:
-  metaTitle: "${data.title.replace(/"/g, '\\"')} | UI/UX Блог"
-  metaDescription: "${data.description.replace(/"/g, '\\"')}"
----
-
-${data.content}
-`;
-
-      // Вместо API запроса - сразу показываем готовый контент
-      showArticleInstructions({
-        success: true,
-        fileCreated: false,
-        message: 'Article data prepared successfully',
-        slug,
-        content: frontmatter,
-        instructions: [
-          '1. Натисніть "Завантажити файл" або скопіюйте контент',
-          '2. Помістіть файл в папку src/content/posts/ вашого проекту',
-          '3. Перезапустіть сервер розробки (npm run dev)',
-          '4. Ваша стаття з\'явиться на сайті!',
-          '5. Не забудьте додати зображення в public/images/posts/ (якщо потрібно)'
-        ]
-      });
-      
-    } catch (error) {
-      console.error('Error:', error);
-      showNotification('Помилка при створенні статті', false);
-    } finally {
-      // Восстанавливаем кнопку
-      if (submitBtn && originalText) {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-      }
-    }
   });
-
-  // Обработка загрузки обложки
-  const coverInput = document.getElementById('article-cover');
-  const coverPreview = document.getElementById('cover-preview');
-
-  // Клик по области загрузки
-  coverPreview?.addEventListener('click', () => {
-    coverInput?.click();
-  });
-
-  coverInput?.addEventListener('change', (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (coverPreview && e.target?.result) {
-          coverPreview.innerHTML = `
-            <img src="${e.target.result}" alt="Preview" class="w-full h-full object-cover rounded-lg" />
-          `;
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-  }); // Закрывающая скобка для DOMContentLoaded
 </script>
 
 <style>
   /* Анимации для модального окна */
-  #create-article-modal {
+  #createArticleModal {
     animation: fadeIn 0.3s ease-out;
   }
 
-  #create-article-modal > div {
+  #createArticleModal > div {
     animation: slideIn 0.3s ease-out;
   }
 

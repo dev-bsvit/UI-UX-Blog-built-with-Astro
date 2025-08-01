@@ -1,17 +1,14 @@
 ---
 import { getCollection, type CollectionEntry } from 'astro:content';
-import LayoutWithSidebar from '../../layouts/LayoutWithSidebar.astro';
-import AuthorBadge from '../../components/AuthorBadge.astro';
-import Tag from '../../components/Tag.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import Comments from '../../components/Comments.astro';
-import PostInteractions from '../../components/PostInteractions.astro';
 
 // Генерируем статические пути для всех постов
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => {
     return !data.draft;
   });
-
+  
   return posts.map((post) => ({
     params: { slug: post.slug },
     props: { post },
@@ -26,115 +23,254 @@ type Props = {
 const { post } = Astro.props;
 const { Content } = await post.render();
 
-// Получаем связанные посты (по тегам)
-const allPosts = await getCollection('posts', ({ data }) => !data.draft);
-const relatedPosts = allPosts
-  .filter((p) => 
-    p.slug !== post.slug && 
-    p.data.tags.some(tag => post.data.tags.includes(tag))
-  )
-  .sort((a, b) => 
-    new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
-  )
-  .slice(0, 2);
+// Парсим теги
+const tags = post.data.tags || [];
+
+// Подготавливаем данные для SEO
+const title = `${post.data.title} | UI/UX Блог`;
+const description = post.data.excerpt || post.data.description;
+const canonicalURL = new URL(`/posts/${post.slug}`, Astro.site);
+const ogImage = post.data.cover || new URL('/og-image.jpg', Astro.site);
+
+// Форматируем дату
+const publishedDate = new Date(post.data.publishedAt).toLocaleDateString('uk-UA', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
 ---
 
-<LayoutWithSidebar title={post.data.title} description={post.data.description} image={post.data.coverImage} article={true} currentPath={`/posts/${post.slug}`}>  
-  <!-- Хлебные крошки -->
-  <nav class="px-0 py-4" aria-label="Breadcrumb">
-    <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-      <li><a href="/" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Головна</a></li>
-      <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></li>
-      <li><a href="/posts" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Статті</a></li>
-      <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></li>
-      <li><a href={`/categories/${post.data.category.toLowerCase()}`} class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{post.data.category}</a></li>
-      <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></li>
-      <li class="text-gray-900 dark:text-white font-medium truncate">{post.data.title}</li>
-    </ol>
-  </nav>
+<BaseLayout 
+  title={title}
+  description={description}
+  canonicalURL={canonicalURL}
+  ogImage={ogImage}
+  article={true}
+>
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Хлебные крошки -->
+    <nav class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+      <a href="/" class="hover:text-purple-600 dark:hover:text-purple-400">Головна</a>
+      <span class="mx-2">→</span>
+      <a href="/posts" class="hover:text-purple-600 dark:hover:text-purple-400">Статті</a>
+      <span class="mx-2">→</span>
+      <span class="text-gray-900 dark:text-white">{post.data.title}</span>
+    </nav>
 
-  <!-- Карточка статьи с белым фоном -->
-  <article class="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden w-full">
-    
-    <!-- Заголовок статьи -->
-    <header class="p-6 pt-6">
-      {post.data.featured && (
-        <div class="mb-4">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
-            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-            Рекомендуємо
-          </span>
-        </div>
-      )}
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">{post.data.title}</h1>
-      <p class="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">{post.data.description}</p>
-      <!-- Мета-информация -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 border-t border-b border-gray-200 dark:border-gray-800">
-        <div class="flex items-center gap-4">
-          <AuthorBadge name={post.data.author.name} avatar={post.data.author.avatar} size="lg" showRole={true} role={post.data.author.bio} />
-        </div>
-        <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <time datetime={new Date(post.data.publishedAt).toISOString()}>{new Date(post.data.publishedAt).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+    <article class="prose prose-lg dark:prose-invert max-w-none">
+      <!-- Заголовок статьи -->
+      <header class="mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          {post.data.title}
+        </h1>
+        
+        <!-- Мета информация -->
+        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6">
+          <time datetime={post.data.publishedAt}>
+            {publishedDate}
+          </time>
           <span>•</span>
           <span>{post.data.readingTime}</span>
-          {post.data.updatedAt && (<><span>•</span><span title={`Оновлено ${new Date(post.data.updatedAt).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}`}>Оновлено</span></>)}
+          <span>•</span>
+          <span class="views-count">0 переглядів</span>
         </div>
-      </div>
-      <!-- Теги -->
-      <div class="flex flex-wrap gap-2 mt-6">
-        {post.data.tags.map(tag => (
-          <Tag variant="subtle" size="sm" href={`/tags/${tag.toLowerCase()}`}>{tag}</Tag>
-        ))}
-      </div>
-    </header>
 
-    <!-- Изображение статьи -->
-    {post.data.coverImage && (
-      <div class="mx-6 mb-6 rounded-2xl overflow-hidden">
-        <img src={post.data.coverImage} alt={post.data.coverImageAlt || post.data.title} class="w-full h-auto transition-transform duration-300 hover:scale-105" loading="eager" />
-      </div>
-    )}
-
-    <!-- Контент поста -->
-    <div class="prose prose-lg max-w-none dark:prose-invert prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-white prose-code:text-pink-600 dark:prose-code:text-pink-400 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
-      <Content />
-    </div>
-
-    <!-- Интерактивные элементы статьи -->
-    <PostInteractions 
-      postSlug={post.slug} 
-      postTitle={post.data.title}
-      postUrl={`${Astro.site}/posts/${post.slug}`}
-    />
-
-    <!-- Связанные статьи -->
-    {relatedPosts.length > 0 && (
-      <div class="px-6 pb-6">
-        <div class="pt-6 border-t border-gray-200 dark:border-gray-800">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Схожі статті</h2>
-          <div class="grid md:grid-cols-2 gap-6">
-            {relatedPosts.slice(0, 2).map(related => (
-              <article class="card p-6 hover:-translate-y-1 transform transition-all duration-200">
-                <a href={`/posts/${related.slug}`}>
-                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">{related.data.title}</h3>
-                  <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">{related.data.excerpt}</p>
-                  <div class="flex items-center justify-between mt-4">
-                    <time class="text-xs text-gray-500 dark:text-gray-400">{new Date(related.data.publishedAt).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
-                    <span class="text-primary-600 dark:text-primary-400 text-sm font-medium">Читати →</span>
-                  </div>
-                </a>
-              </article>
+        <!-- Теги -->
+        {tags.length > 0 && (
+          <div class="flex flex-wrap gap-2 mb-6">
+            {tags.map((tag: string) => (
+              <span class="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                #{tag}
+              </span>
             ))}
           </div>
+        )}
+
+        <!-- Обложка -->
+        {post.data.cover && (
+          <div class="mb-8">
+            <img 
+              src={post.data.cover} 
+              alt={post.data.title}
+              class="w-full h-64 object-cover rounded-lg"
+            />
+          </div>
+        )}
+      </header>
+
+      <!-- Контент статьи -->
+      <div class="prose prose-lg dark:prose-invert max-w-none">
+        <Content />
+      </div>
+      
+      <!-- Кнопки взаимодействия -->
+      <div class="flex items-center justify-between mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex items-center space-x-4">
+          <button 
+            class="like-button flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            data-post-slug={post.slug}
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+            <span class="likes-count">0</span>
+          </button>
+
+          <button 
+            class="bookmark-button flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            data-post-slug={post.slug}
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+            </svg>
+            <span>Зберегти</span>
+          </button>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <!-- Поделиться -->
+          <button 
+            class="share-button flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            data-url={canonicalURL}
+            data-title={post.data.title}
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+            </svg>
+            <span>Поділитися</span>
+          </button>
         </div>
       </div>
-    )}
+    </article>
 
     <!-- Комментарии -->
-    <div class="px-6 pb-6">
-      <div class="pt-6 border-t border-gray-200 dark:border-gray-800">
-        <Comments postSlug={post.slug} />
-      </div>
-    </div>
-  </article>
-</LayoutWithSidebar> 
+    <Comments postSlug={post.slug} />
+  </main>
+</BaseLayout>
+
+<script>
+  // Увеличиваем счетчик просмотров
+  document.addEventListener('DOMContentLoaded', () => {
+    const slug = window.location.pathname.split('/').pop();
+    if (slug) {
+      const views = JSON.parse(localStorage.getItem('post_views') || '{}');
+      views[slug] = (views[slug] || 0) + 1;
+      localStorage.setItem('post_views', JSON.stringify(views));
+      
+      const viewsElement = document.querySelector('.views-count');
+      if (viewsElement) {
+        viewsElement.textContent = `${views[slug]} переглядів`;
+      }
+    }
+  });
+
+  // Обработка лайков
+  document.querySelector('.like-button')?.addEventListener('click', async (e) => {
+    const button = e.currentTarget as HTMLButtonElement;
+    const postSlug = button.dataset.postSlug;
+    const likesCount = button.querySelector('.likes-count');
+    
+    if (!postSlug) return;
+    
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+      alert('Для лайков нужно войти в систему');
+      return;
+    }
+    
+    const userLikes = JSON.parse(localStorage.getItem(`user_likes_${user.uid}`) || '[]');
+    const allLikes = JSON.parse(localStorage.getItem('all_likes') || '{}');
+    
+    const isLiked = userLikes.includes(postSlug);
+    
+    if (isLiked) {
+      // Убираем лайк
+      const updatedUserLikes = userLikes.filter((slug: string) => slug !== postSlug);
+      const updatedAllLikes = { ...allLikes };
+      updatedAllLikes[postSlug] = Math.max(0, (updatedAllLikes[postSlug] || 0) - 1);
+      
+      localStorage.setItem(`user_likes_${user.uid}`, JSON.stringify(updatedUserLikes));
+      localStorage.setItem('all_likes', JSON.stringify(updatedAllLikes));
+      
+      button.classList.remove('liked');
+      if (likesCount) {
+        likesCount.textContent = updatedAllLikes[postSlug].toString();
+      }
+    } else {
+      // Добавляем лайк
+      const updatedUserLikes = [...userLikes, postSlug];
+      const updatedAllLikes = { ...allLikes };
+      updatedAllLikes[postSlug] = (updatedAllLikes[postSlug] || 0) + 1;
+      
+      localStorage.setItem(`user_likes_${user.uid}`, JSON.stringify(updatedUserLikes));
+      localStorage.setItem('all_likes', JSON.stringify(updatedAllLikes));
+      
+      button.classList.add('liked');
+      if (likesCount) {
+        likesCount.textContent = updatedAllLikes[postSlug].toString();
+      }
+    }
+  });
+
+  // Обработка закладок
+  document.querySelector('.bookmark-button')?.addEventListener('click', async (e) => {
+    const button = e.currentTarget as HTMLButtonElement;
+    const postSlug = button.dataset.postSlug;
+    
+    if (!postSlug) return;
+    
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+      alert('Для закладок нужно войти в систему');
+      return;
+    }
+    
+    const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+    const isBookmarked = userBookmarks.includes(postSlug);
+    
+    if (isBookmarked) {
+      // Убираем из закладок
+      const updatedBookmarks = userBookmarks.filter((slug: string) => slug !== postSlug);
+      localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedBookmarks));
+      
+      const span = button.querySelector('span:last-child');
+      if (span) {
+        span.textContent = 'Зберегти';
+      }
+    } else {
+      // Добавляем в закладки
+      const updatedBookmarks = [...userBookmarks, postSlug];
+      localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedBookmarks));
+      
+      const span = button.querySelector('span:last-child');
+      if (span) {
+        span.textContent = 'Збережено';
+      }
+    }
+  });
+
+  // Обработка поделиться
+  document.querySelector('.share-button')?.addEventListener('click', (e) => {
+    const button = e.currentTarget as HTMLButtonElement;
+    const url = button.dataset.url;
+    const title = button.dataset.title;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        url: url
+      });
+    } else {
+      // Fallback - копируем в буфер обмена
+      navigator.clipboard.writeText(url || '');
+      const span = button.querySelector('span:last-child');
+      if (span) {
+        const originalText = span.textContent;
+        span.textContent = 'Скопійовано!';
+        setTimeout(() => {
+          span.textContent = originalText;
+        }, 2000);
+      }
+    }
+  });
+</script> 
