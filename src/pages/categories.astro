@@ -25,11 +25,6 @@ Object.keys(postsByCategory).forEach(category => {
 
 // Создаем массив категорий с метаданными
 const categories = Object.entries(postsByCategory).map(([name, posts]) => {
-  const totalViews = posts.reduce((sum, post) => {
-    const views = JSON.parse(localStorage.getItem('post_views') || '{}');
-    return sum + (views[post.slug] || 0);
-  }, 0);
-
   return {
     name,
     slug: name.toLowerCase().replace(/\s+/g, '-'),
@@ -38,7 +33,6 @@ const categories = Object.entries(postsByCategory).map(([name, posts]) => {
     description: getCategoryDescription(name),
     icon: getCategoryIcon(name),
     color: getCategoryColor(name),
-    totalViews
   };
 }).sort((a, b) => b.count - a.count); // Сортируем по количеству статей
 
