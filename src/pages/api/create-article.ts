@@ -1,6 +1,4 @@
 import type { APIRoute } from 'astro';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -14,22 +12,20 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Путь к папке с постами
-    const postsDir = join(process.cwd(), 'src', 'content', 'posts');
-    
-    // Создаем папку если не существует
-    await mkdir(postsDir, { recursive: true });
-    
-    // Путь к файлу статьи
-    const filePath = join(postsDir, `${slug}.mdx`);
-    
-    // Записываем файл
-    await writeFile(filePath, content, 'utf-8');
-
+    // В продакшене Vercel не позволяет записывать файлы
+    // Поэтому возвращаем данные для ручного создания
     return new Response(JSON.stringify({ 
       success: true, 
-      message: 'Article created successfully',
-      slug 
+      message: 'Article data prepared successfully',
+      slug,
+      content,
+      instructions: [
+        '1. Скопируйте содержимое ниже',
+        '2. Создайте файл в src/content/posts/',
+        '3. Назовите файл: ' + slug + '.mdx',
+        '4. Вставьте содержимое и сохраните',
+        '5. Перезапустите сервер'
+      ]
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

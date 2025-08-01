@@ -336,6 +336,7 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
 
   // Инициализация закладок
   function initializeBookmarks() {
+    console.log('Initializing bookmarks...');
     const bookmarkButtons = document.querySelectorAll('.bookmark-button');
     
     bookmarkButtons.forEach(button => {
@@ -347,122 +348,26 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
         console.warn('Bookmark elements not found for post:', postSlug);
         return;
       }
-      
-      // Функция обновления состояния закладки
+
       function updateBookmarkState() {
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         
-        if (user) {
-          // Получаем персональные закладки пользователя
-          const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
-          const isBookmarked = userBookmarks.includes(postSlug);
-          
-          // Получаем общее количество закладок для этой статьи
-          const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
-          const totalBookmarks = allBookmarks[postSlug] || 0;
-          
-          // Устанавливаем визуальное состояние
-          if (isBookmarked) {
-            bookmarkIcon.style.fill = '#3b82f6';
-            bookmarkIcon.style.stroke = '#3b82f6';
-            button.classList.add('bookmarked');
-          } else {
-            bookmarkIcon.style.fill = 'none';
-            bookmarkIcon.style.stroke = 'currentColor';
-            button.classList.remove('bookmarked');
-          }
-          
-          // Обновляем счетчик
-          bookmarksCount.textContent = totalBookmarks;
-        } else {
-          // Пользователь не авторизован
+        if (!user) {
+          // Пользователь не авторизован - показываем базовое состояние
           const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
           const totalBookmarks = allBookmarks[postSlug] || 0;
           bookmarksCount.textContent = totalBookmarks;
-          
           bookmarkIcon.style.fill = 'none';
           bookmarkIcon.style.stroke = 'currentColor';
           button.classList.remove('bookmarked');
-        }
-      }
-      
-      // Инициализируем состояние
-      updateBookmarkState();
-      
-      // Обработчик клика
-      button.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const user = JSON.parse(localStorage.getItem('user') || 'null');
-        
-        if (!user) {
-          // Показываем уведомление о необходимости авторизации
-          showNotification('Увійдіть, щоб додавати статті в закладки', false);
           return;
         }
-        
-        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
-        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
-        const isCurrentlyBookmarked = userBookmarks.includes(postSlug);
-        
-        let updatedUserBookmarks;
-        let updatedAllBookmarks = { ...allBookmarks };
-        
-        if (isCurrentlyBookmarked) {
-          // Удаляем из закладок
-          updatedUserBookmarks = userBookmarks.filter(slug => slug !== postSlug);
-          updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 0) - 1);
-          showNotification('Статтю видалено з закладок');
-        } else {
-          // Добавляем в закладки
-          updatedUserBookmarks = [...userBookmarks, postSlug];
-          updatedAllBookmarks[postSlug] = (updatedAllBookmarks[postSlug] || 0) + 1;
-          showNotification('Статтю додано в закладки');
-        }
-        
-        // Сохраняем обновленные данные
-        localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedUserBookmarks));
-        localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
-        
-        // Обновляем состояние всех кнопок закладок на странице
-        updateAllBookmarkButtons();
-        
-        // Анимация
-        button.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-          button.style.transform = 'scale(1)';
-        }, 150);
-      });
 
-      // Слушаем изменения авторизации
-      window.addEventListener('userAuthChanged', function(event) {
-        updateBookmarkState();
-      });
-    });
-  }
-
-  // Функция для обновления всех кнопок закладок на странице
-  function updateAllBookmarkButtons() {
-    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
-    
-    bookmarkButtons.forEach(button => {
-      const postSlug = button.getAttribute('data-post-slug');
-      const bookmarkIcon = button.querySelector('.bookmark-icon');
-      const bookmarksCount = button.querySelector('.bookmarks-count');
-      
-      if (!bookmarkIcon || !bookmarksCount) {
-        console.warn('Bookmark elements not found for post:', postSlug);
-        return;
-      }
-      
-      if (user) {
         const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
         const isBookmarked = userBookmarks.includes(postSlug);
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
         const totalBookmarks = allBookmarks[postSlug] || 0;
-        
+
         if (isBookmarked) {
           bookmarkIcon.style.fill = '#3b82f6';
           bookmarkIcon.style.stroke = '#3b82f6';
@@ -472,12 +377,84 @@ const randomLikes = Math.floor(Math.random() * 10) + 1;
           bookmarkIcon.style.stroke = 'currentColor';
           button.classList.remove('bookmarked');
         }
+
+        bookmarksCount.textContent = totalBookmarks;
+      }
+
+      // Обновляем состояние при клике
+      button.addEventListener('click', () => {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
         
+        if (!user) {
+          alert('Для добавления закладок нужно войти в систему');
+          return;
+        }
+
+        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+        const isCurrentlyBookmarked = userBookmarks.includes(postSlug);
+
+        let updatedUserBookmarks;
+        let updatedAllBookmarks = { ...allBookmarks };
+
+        if (isCurrentlyBookmarked) {
+          // Удаляем закладку
+          updatedUserBookmarks = userBookmarks.filter(slug => slug !== postSlug);
+          updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 0) - 1);
+        } else {
+          // Добавляем закладку
+          updatedUserBookmarks = [...userBookmarks, postSlug];
+          updatedAllBookmarks[postSlug] = (updatedAllBookmarks[postSlug] || 0) + 1;
+        }
+
+        localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedUserBookmarks));
+        localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
+
+        // Обновляем все кнопки закладок на странице
+        updateAllBookmarkButtons();
+      });
+
+      // Инициализируем состояние
+      updateBookmarkState();
+    });
+  }
+
+  // Обновляем все кнопки закладок на странице
+  function updateAllBookmarkButtons() {
+    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+
+    bookmarkButtons.forEach(button => {
+      const postSlug = button.getAttribute('data-post-slug');
+      const bookmarkIcon = button.querySelector('.bookmark-icon');
+      const bookmarksCount = button.querySelector('.bookmarks-count');
+
+      if (!bookmarkIcon || !bookmarksCount) {
+        console.warn('Bookmark elements not found for post:', postSlug);
+        return;
+      }
+
+      if (user) {
+        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+        const isBookmarked = userBookmarks.includes(postSlug);
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+
+        if (isBookmarked) {
+          bookmarkIcon.style.fill = '#3b82f6';
+          bookmarkIcon.style.stroke = '#3b82f6';
+          button.classList.add('bookmarked');
+        } else {
+          bookmarkIcon.style.fill = 'none';
+          bookmarkIcon.style.stroke = 'currentColor';
+          button.classList.remove('bookmarked');
+        }
+
         bookmarksCount.textContent = totalBookmarks;
       } else {
+        // Пользователь не авторизован
         const totalBookmarks = allBookmarks[postSlug] || 0;
         bookmarksCount.textContent = totalBookmarks;
-        
         bookmarkIcon.style.fill = 'none';
         bookmarkIcon.style.stroke = 'currentColor';
         button.classList.remove('bookmarked');
