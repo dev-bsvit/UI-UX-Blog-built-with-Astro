@@ -404,19 +404,27 @@ seo:
 ${data.content}
 `;
 
-      // Создаем файл для скачивания
-      const blob = new Blob([frontmatter], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${slug}.mdx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Отправляем данные на сервер
+      const response = await fetch('/api/create-article', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          slug,
+          content: frontmatter,
+          title: data.title,
+          description: data.description
+        })
+      });
 
-      showNotification(`Файл статті створено! Збережіть файл "${slug}.mdx" у папку src/content/posts/ та перезапустіть сервер`, true);
-      closeModal();
+      if (response.ok) {
+        showNotification('Стаття успішно створена! Перезапустіть сервер для відображення', true);
+        closeModal();
+      } else {
+        const errorData = await response.json();
+        showNotification(`Помилка: ${errorData.error || 'Невідома помилка'}`, false);
+      }
       
     } catch (error) {
       console.error('Error:', error);
