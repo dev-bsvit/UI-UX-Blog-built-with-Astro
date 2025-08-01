@@ -1,15 +1,15 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 
-// Firebase конфигурация
+// Firebase конфигурация с переменными окружения
 const firebaseConfig = {
-  apiKey: "AIzaSyCPGe7HUB7xrfEH12gB-Ccgd6anRP140SA",
-  authDomain: "enuance-b2f45.firebaseapp.com",
-  projectId: "enuance-b2f45",
-  storageBucket: "enuance-b2f45.firebasestorage.app",
-  messagingSenderId: "374493765632",
-  appId: "1:374493765632:web:990f4881850aaa221878e5",
-  measurementId: "G-NZ8LEGJRDW"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCPGe7HUB7xrfEH12gB-Ccgd6anRP140SA",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "enuance-b2f45.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "enuance-b2f45",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "enuance-b2f45.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "374493765632",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:374493765632:web:990f4881850aaa221878e5",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-NZ8LEGJRDW"
 };
 
 // Инициализация Firebase
