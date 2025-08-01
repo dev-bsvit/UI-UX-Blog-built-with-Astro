@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
+import PostCard from '../components/PostCard.astro';
+
+// Отримуємо всі пости
+const allPosts = await getCollection('posts');
+
+// Сортуємо пости за датою (найновіші спочатку)
+const sortedPosts = allPosts.sort((a, b) =>
+  new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
+);
+---
+
+<LayoutWithSidebar
+  title="Статті"
+  description="Всі статті блогу про UI/UX дизайн"
+  currentPath="/posts"
+>
+  <div>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        Всі статті
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        Знайдіть найкращі матеріали про UI/UX дизайн, дослідження та доступність
+      </p>
+    </div>
+    
+    <!-- Статті -->
+    <div class="grid grid-cols-1 gap-4">
+      {sortedPosts.map((post) => (
+        <PostCard
+          post={post}
+          featured={post.data.featured}
+        />
+      ))}
+    </div>
+  </div>
+</LayoutWithSidebar> 

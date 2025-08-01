@@ -1,0 +1,47 @@
+---
+const newsItems = [
+  {
+    time: '6 ч',
+    title: 'Инсайдер показал все цвета iPhone 17 и 17 Pro'
+  },
+  {
+    time: '22 ч',
+    title: 'Студия Артемия Лебедева обновила упаковку бургеров Бургер Кинга'
+  },
+  {
+    time: '28 июля',
+    title: 'В Москве обновили дизайн схемы метро'
+  },
+  {
+    time: '28 июля',
+    title: 'Дизайнерс, давайте общаться!'
+  }
+];
+---
+
+<aside class="w-[260px]">
+  <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 w-[260px]">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Новости</h2>
+      <a href="/news" class="flex items-center gap-2 px-3 py-2 text-sm font-normal text-gray-800 dark:text-gray-200 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        Все
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+    
+    <div class="space-y-4">
+      {newsItems.map((item) => (
+        <a href="#" class="block group">
+          <div class="space-y-1">
+            <p class="text-sm text-gray-600 dark:text-gray-400">{item.time}</p>
+            <h3 class="font-medium text-base text-gray-900 dark:text-white leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {item.title}
+            </h3>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</aside> 

@@ -1,0 +1,517 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+export interface Props {
+  post: CollectionEntry<'posts'>;
+  featured?: boolean;
+}
+
+const { post, featured = false } = Astro.props;
+const { data } = post;
+
+// Генерація випадкових метрик для демо
+const randomViews = Math.floor(Math.random() * 500) + 100;
+const randomLikes = Math.floor(Math.random() * 10) + 1;
+---
+
+<article class="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden w-full transition-all duration-300 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-gray-900/30 cursor-pointer" data-post-slug={post.slug}>
+  
+  <!-- Зображення -->
+  <a href={`/posts/${post.slug}`} class="block">
+    {data.coverImage && (
+      <div class="mx-4 mt-4 rounded-2xl overflow-hidden">
+        <img 
+          src={data.coverImage} 
+          alt={data.coverImageAlt || data.title}
+          class="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
+          loading="lazy"
+        />
+      </div>
+    )}
+  </a>
+
+  <!-- Основний контент -->
+  <div class="p-4 pt-4">
+    
+    <!-- Автор та кнопка підписки -->
+    <div class="flex items-start justify-between mb-4">
+      <div class="flex items-center gap-2">
+        <div class="w-11 h-11 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <span class="font-bold text-lg text-gray-500 dark:text-gray-400">
+            {data.author?.name?.charAt(0) || 'A'}
+          </span>
+        </div>
+        <div class="min-w-0">
+          <p class="font-medium text-base text-gray-900 dark:text-white leading-tight">
+            {data.author?.name || 'Анонім'}
+          </p>
+          <div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            <span>{data.category}</span>
+            <span>·</span>
+            <span>{data.readingTime}</span>
+          </div>
+        </div>
+      </div>
+      <button class="px-3 py-2 text-sm font-normal text-gray-800 dark:text-gray-200 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex-shrink-0 h-8">
+        Подписаться
+      </button>
+    </div>
+
+    <!-- Заголовок та опис -->
+    <div class="mb-4">
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-white leading-tight mb-2 line-clamp-3">
+        <a href={`/posts/${post.slug}`}>
+          {data.title}
+        </a>
+      </h3>
+      <p class="text-gray-600 dark:text-gray-400 text-base leading-relaxed line-clamp-2 h-12">
+        {data.excerpt || data.description}
+      </p>
+    </div>
+    <!-- Теги -->
+    <div class="flex items-center gap-2 mb-4">
+      {data.tags?.slice(0, 3).map((tag) => (
+        <span class="text-sm text-blue-600 dark:text-blue-400 font-medium">
+          #{tag}
+        </span>
+      ))}
+    </div>
+  </div>
+
+  <!-- Нижня панель з іконками -->
+  <div class="px-4 pb-4 flex items-center justify-between">
+    
+    <!-- Ліва частина: лайки та смайлик -->
+    <div class="flex items-center gap-2">
+      <!-- Кнопка лайків -->
+      <button class="like-button flex items-center gap-2 px-2 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-post-slug={post.slug}>
+        <svg class="like-icon w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
+        </svg>
+        <span class="like-count text-sm font-medium text-gray-900 dark:text-white">{randomLikes}</span>
+      </button>
+      
+      <!-- Кнопка смайлика -->
+      <button class="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+          <line x1="9" y1="9" x2="9.01" y2="9"></line>
+          <line x1="15" y1="9" x2="15.01" y2="9"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Права частина: коментарі, закладки, перегляди -->
+    <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+      <!-- Коментарі -->
+      <button class="comments-button flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors" data-post-slug={post.slug}>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <span class="comments-count">0</span>
+      </button>
+      
+      <!-- Закладки -->
+      <button class="bookmark-button flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors" data-post-slug={post.slug}>
+        <svg class="bookmark-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+        </svg>
+        <span class="bookmarks-count">0</span>
+      </button>
+      
+      <!-- Перегляди -->
+      <div class="flex items-center gap-1.5">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+        </svg>
+        <span class="views-count">{randomViews}</span>
+      </div>
+    </div>
+  </div>
+</article>
+
+<style>
+  /* Для обрізання довгого тексту */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Анимация для кнопки лайка */
+  .like-button {
+    transition: transform 0.15s ease-in-out;
+  }
+  
+  .bookmark-button.bookmarked .bookmark-icon {
+    fill: #3b82f6;
+    stroke: #3b82f6;
+  }
+  
+  .like-button.liked .like-icon {
+    animation: heartBeat 0.3s ease-in-out;
+  }
+  
+  @keyframes heartBeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+</style>
+
+<script>
+  // Функция для очистки поврежденных данных закладок (временная для отладки)
+  function clearBookmarksData() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (user) {
+      localStorage.removeItem(`user_bookmarks_${user.uid}`);
+    }
+    localStorage.removeItem('all_bookmarks');
+    console.log('Bookmarks data cleared');
+    location.reload();
+  }
+  
+  // Временно добавляем функцию в глобальную область для вызова из консоли
+  window.clearBookmarksData = clearBookmarksData;
+
+  // Функция для показа уведомлений
+  function showNotification(message, isSuccess = true) {
+    // Создаем элемент уведомления
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 ${
+      isSuccess ? 'bg-green-500' : 'bg-red-500'
+    } text-white`;
+    
+    notification.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${
+          isSuccess ? 'M5 13l4 4L19 7' : 'M6 18L18 6M6 6l12 12'
+        }"></path>
+      </svg>
+      <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Удаляем уведомление через 3 секунды
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
+  }
+
+  // Инициализация лайков
+  function initializeLikes() {
+    const likeButtons = document.querySelectorAll('.like-button');
+    
+    likeButtons.forEach(button => {
+      const postSlug = button.getAttribute('data-post-slug');
+      const likeCount = button.querySelector('.like-count');
+      const likeIcon = button.querySelector('.like-icon');
+      
+      if (!likeCount || !likeIcon) return;
+      
+      // Загружаем текущее количество лайков
+      const currentLikes = parseInt(localStorage.getItem(`likes_${postSlug}`)) || parseInt(likeCount.textContent) || 0;
+      likeCount.textContent = currentLikes;
+      
+      // Проверяем, лайкнул ли пользователь
+      const userLiked = localStorage.getItem(`user_liked_${postSlug}`) === 'true';
+      if (userLiked) {
+        button.classList.add('liked');
+        likeIcon.style.color = '#ef4444';
+      }
+      
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isLiked = button.classList.contains('liked');
+        let newCount = currentLikes;
+        
+        if (isLiked) {
+          // Убираем лайк
+          button.classList.remove('liked');
+          likeIcon.style.color = '#ef4444';
+          newCount = Math.max(0, currentLikes - 1);
+          localStorage.setItem(`user_liked_${postSlug}`, 'false');
+        } else {
+          // Добавляем лайк
+          button.classList.add('liked');
+          likeIcon.style.color = '#dc2626';
+          newCount = currentLikes + 1;
+          localStorage.setItem(`user_liked_${postSlug}`, 'true');
+        }
+        
+        likeCount.textContent = newCount;
+        localStorage.setItem(`likes_${postSlug}`, newCount.toString());
+        
+        // Анимация
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          button.style.transform = 'scale(1)';
+        }, 150);
+      });
+    });
+  }
+
+  // Инициализация счетчика просмотров
+  function initializeViews() {
+    const cards = document.querySelectorAll('[data-post-slug]');
+    
+    cards.forEach(card => {
+      const postSlug = card.getAttribute('data-post-slug');
+      const viewsCount = card.querySelector('.views-count');
+      
+      if (!viewsCount) {
+        console.warn('Views count element not found for post:', postSlug);
+        return;
+      }
+      
+      const currentViews = parseInt(localStorage.getItem(`views_${postSlug}`)) || parseInt(viewsCount.textContent) || 0;
+      
+      // Увеличиваем счетчик просмотров при первой загрузке
+      const viewKey = `viewed_${postSlug}_${Date.now()}`;
+      if (!sessionStorage.getItem(viewKey)) {
+        const newViews = currentViews + 1;
+        localStorage.setItem(`views_${postSlug}`, newViews.toString());
+        viewsCount.textContent = newViews;
+        sessionStorage.setItem(viewKey, 'true');
+      } else {
+        viewsCount.textContent = currentViews;
+      }
+    });
+  }
+
+  // Инициализация счетчика комментариев
+  function initializeComments() {
+    const commentsButtons = document.querySelectorAll('.comments-button');
+    
+    commentsButtons.forEach(button => {
+      const postSlug = button.getAttribute('data-post-slug');
+      const commentsCount = button.querySelector('.comments-count');
+      
+      if (!commentsCount) {
+        console.warn('Comments count element not found for post:', postSlug);
+        return;
+      }
+      
+      // Загружаем количество комментариев из localStorage
+      const comments = JSON.parse(localStorage.getItem(`comments_${postSlug}`) || '[]');
+      commentsCount.textContent = comments.length;
+      
+      // Обработчик клика для перехода к комментариям
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const postUrl = `/posts/${postSlug}#comments`;
+        window.location.href = postUrl;
+      });
+    });
+  }
+
+  // Функция обновления счетчиков комментариев на карточках
+  function updateCommentsCounters(postSlug, count) {
+    // Обновляем счетчики на всех карточках с этим постом
+    const commentsButtons = document.querySelectorAll(`.comments-button[data-post-slug="${postSlug}"]`);
+    commentsButtons.forEach(button => {
+      const commentsCount = button.querySelector('.comments-count');
+      if (commentsCount) {
+        commentsCount.textContent = count;
+      }
+    });
+  }
+
+  // Инициализация закладок
+  function initializeBookmarks() {
+    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
+    
+    bookmarkButtons.forEach(button => {
+      const postSlug = button.getAttribute('data-post-slug');
+      const bookmarkIcon = button.querySelector('.bookmark-icon');
+      const bookmarksCount = button.querySelector('.bookmarks-count');
+      
+      if (!bookmarkIcon || !bookmarksCount) {
+        console.warn('Bookmark elements not found for post:', postSlug);
+        return;
+      }
+      
+      // Функция обновления состояния закладки
+      function updateBookmarkState() {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        
+        if (user) {
+          // Получаем персональные закладки пользователя
+          const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+          const isBookmarked = userBookmarks.includes(postSlug);
+          
+          // Получаем общее количество закладок для этой статьи
+          const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+          const totalBookmarks = allBookmarks[postSlug] || 0;
+          
+          // Устанавливаем визуальное состояние
+          if (isBookmarked) {
+            bookmarkIcon.style.fill = '#3b82f6';
+            bookmarkIcon.style.stroke = '#3b82f6';
+            button.classList.add('bookmarked');
+          } else {
+            bookmarkIcon.style.fill = 'none';
+            bookmarkIcon.style.stroke = 'currentColor';
+            button.classList.remove('bookmarked');
+          }
+          
+          // Обновляем счетчик
+          bookmarksCount.textContent = totalBookmarks;
+        } else {
+          // Пользователь не авторизован
+          const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+          const totalBookmarks = allBookmarks[postSlug] || 0;
+          bookmarksCount.textContent = totalBookmarks;
+          
+          bookmarkIcon.style.fill = 'none';
+          bookmarkIcon.style.stroke = 'currentColor';
+          button.classList.remove('bookmarked');
+        }
+      }
+      
+      // Инициализируем состояние
+      updateBookmarkState();
+      
+      // Обработчик клика
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        
+        if (!user) {
+          // Показываем уведомление о необходимости авторизации
+          showNotification('Увійдіть, щоб додавати статті в закладки', false);
+          return;
+        }
+        
+        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+        const isCurrentlyBookmarked = userBookmarks.includes(postSlug);
+        
+        let updatedUserBookmarks;
+        let updatedAllBookmarks = { ...allBookmarks };
+        
+        if (isCurrentlyBookmarked) {
+          // Удаляем из закладок
+          updatedUserBookmarks = userBookmarks.filter(slug => slug !== postSlug);
+          updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 0) - 1);
+          showNotification('Статтю видалено з закладок');
+        } else {
+          // Добавляем в закладки
+          updatedUserBookmarks = [...userBookmarks, postSlug];
+          updatedAllBookmarks[postSlug] = (updatedAllBookmarks[postSlug] || 0) + 1;
+          showNotification('Статтю додано в закладки');
+        }
+        
+        // Сохраняем обновленные данные
+        localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedUserBookmarks));
+        localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
+        
+        // Обновляем состояние всех кнопок закладок на странице
+        updateAllBookmarkButtons();
+        
+        // Анимация
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          button.style.transform = 'scale(1)';
+        }, 150);
+      });
+
+      // Слушаем изменения авторизации
+      window.addEventListener('userAuthChanged', function(event) {
+        updateBookmarkState();
+      });
+    });
+  }
+
+  // Функция для обновления всех кнопок закладок на странице
+  function updateAllBookmarkButtons() {
+    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+    
+    bookmarkButtons.forEach(button => {
+      const postSlug = button.getAttribute('data-post-slug');
+      const bookmarkIcon = button.querySelector('.bookmark-icon');
+      const bookmarksCount = button.querySelector('.bookmarks-count');
+      
+      if (!bookmarkIcon || !bookmarksCount) {
+        console.warn('Bookmark elements not found for post:', postSlug);
+        return;
+      }
+      
+      if (user) {
+        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+        const isBookmarked = userBookmarks.includes(postSlug);
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        
+        if (isBookmarked) {
+          bookmarkIcon.style.fill = '#3b82f6';
+          bookmarkIcon.style.stroke = '#3b82f6';
+          button.classList.add('bookmarked');
+        } else {
+          bookmarkIcon.style.fill = 'none';
+          bookmarkIcon.style.stroke = 'currentColor';
+          button.classList.remove('bookmarked');
+        }
+        
+        bookmarksCount.textContent = totalBookmarks;
+      } else {
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        bookmarksCount.textContent = totalBookmarks;
+        
+        bookmarkIcon.style.fill = 'none';
+        bookmarkIcon.style.stroke = 'currentColor';
+        button.classList.remove('bookmarked');
+      }
+    });
+  }
+
+  // Инициализация интерактивных элементов карточек
+  function initializePostCards() {
+    // Инициализация лайков
+    initializeLikes();
+
+    // Инициализация счетчика просмотров
+    initializeViews();
+
+    // Инициализация счетчика комментариев
+    initializeComments();
+
+    // Инициализация закладок
+    initializeBookmarks();
+  }
+
+  // Делаем функцию доступной глобально
+  window.initializePostCards = initializePostCards;
+
+  // Инициализация при загрузке страницы
+  document.addEventListener('DOMContentLoaded', () => {
+    initializePostCards();
+  });
+
+  // Также инициализируем сразу, если DOM уже загружен
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePostCards);
+  } else {
+    initializePostCards();
+  }
+</script> 

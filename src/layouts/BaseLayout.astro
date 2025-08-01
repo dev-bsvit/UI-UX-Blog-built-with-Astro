@@ -1,0 +1,179 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+  canonicalURL?: string;
+}
+
+const {
+  title,
+  description = 'Сучасний блог про UI/UX дизайн, інтерфейси та користувацький досвід',
+  image = '/og-image.jpg',
+  article = false,
+  canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="uk" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- SEO Meta Tags -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={article ? 'article' : 'website'} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.url)} />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(image, Astro.url)} />
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#0ea5e9" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans antialiased">
+    <!-- Canvas для глобального эффекта искр -->
+    <canvas id="global-spark-canvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
+    
+    <slot />
+    
+    <script>
+      class GlobalClickSpark {
+        constructor() {
+          this.canvas = document.getElementById('global-spark-canvas');
+          this.ctx = this.canvas.getContext('2d');
+          
+          this.options = {
+            sparkColor: '#3B82F6', // Blue color
+            sparkSize: 8,
+            sparkRadius: 15,
+            sparkCount: 6,
+            duration: 300,
+          };
+          
+          this.sparks = [];
+          this.animationId = null;
+          
+          this.init();
+        }
+        
+        init() {
+          this.resizeCanvas();
+          this.bindEvents();
+          this.startAnimation();
+        }
+        
+        resizeCanvas() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+        }
+        
+        bindEvents() {
+          // Глобальный обработчик кликов
+          document.addEventListener('click', (e) => {
+            this.createSparks(e);
+          });
+          
+          window.addEventListener('resize', () => {
+            this.resizeCanvas();
+          });
+        }
+        
+        createSparks(e) {
+          const x = e.clientX;
+          const y = e.clientY;
+          const now = performance.now();
+          
+          for (let i = 0; i < this.options.sparkCount; i++) {
+            this.sparks.push({
+              x,
+              y,
+              angle: (2 * Math.PI * i) / this.options.sparkCount,
+              startTime: now
+            });
+          }
+        }
+        
+        easeOut(t) {
+          return t * (2 - t);
+        }
+        
+        draw(timestamp) {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          
+          this.sparks = this.sparks.filter(spark => {
+            const elapsed = timestamp - spark.startTime;
+            if (elapsed >= this.options.duration) {
+              return false;
+            }
+            
+            const progress = elapsed / this.options.duration;
+            const eased = this.easeOut(progress);
+            
+            const distance = eased * this.options.sparkRadius;
+            const lineLength = this.options.sparkSize * (1 - eased);
+            const opacity = 1 - progress;
+            
+            const x1 = spark.x + distance * Math.cos(spark.angle);
+            const y1 = spark.y + distance * Math.sin(spark.angle);
+            const x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle);
+            const y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle);
+            
+            this.ctx.strokeStyle = this.options.sparkColor + Math.floor(opacity * 255).toString(16).padStart(2, '0');
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+            
+            return true;
+          });
+        }
+        
+        startAnimation() {
+          const animate = (timestamp) => {
+            this.draw(timestamp);
+            this.animationId = requestAnimationFrame(animate);
+          };
+          animate();
+        }
+        
+        destroy() {
+          if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+          }
+        }
+      }
+      
+      // Инициализация глобального эффекта искр
+      document.addEventListener('DOMContentLoaded', () => {
+        new GlobalClickSpark();
+      });
+    </script>
+  </body>
+</html> 

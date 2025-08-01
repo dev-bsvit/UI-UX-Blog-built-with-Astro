@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-07-31T11:49:55.216Z",
+  "summary": {
+    "total": 3,
+    "valid": 0,
+    "invalid": 3,
+    "validationRate": "0.00"
+  },
+  "details": [
+    {
+      "filename": "modern-ui-principles.mdx",
+      "valid": false,
+      "errors": [
+        "Missing required field: tags",
+        "Missing required field: category",
+        "Missing required field: readingTime",
+        "Missing required field: excerpt",
+        "Content too short (439 words < 500)"
+      ],
+      "warnings": [
+        "5 sentences are very long (>30 words)"
+      ],
+      "stats": {
+        "wordCount": 439,
+        "characterCount": 3233,
+        "readingTime": 3,
+        "headingCount": 13,
+        "imageCount": 0,
+        "linkCount": 0
+      },
+      "seo": {}
+    },
+    {
+      "filename": "ux-research-guide.mdx",
+      "valid": false,
+      "errors": [
+        "Missing required field: tags",
+        "Missing required field: category",
+        "Missing required field: readingTime",
+        "Missing required field: excerpt"
+      ],
+      "warnings": [
+        "5 sentences are very long (>30 words)"
+      ],
+      "stats": {
+        "wordCount": 535,
+        "characterCount": 4076,
+        "readingTime": 3,
+        "headingCount": 20,
+        "imageCount": 0,
+        "linkCount": 0
+      },
+      "seo": {}
+    },
+    {
+      "filename": "web-accessibility.mdx",
+      "valid": false,
+      "errors": [
+        "Missing required field: tags",
+        "Missing required field: category",
+        "Missing required field: readingTime",
+        "Missing required field: excerpt"
+      ],
+      "warnings": [
+        "3 images without alt text found",
+        "6 sentences are very long (>30 words)"
+      ],
+      "stats": {
+        "wordCount": 806,
+        "characterCount": 6040,
+        "readingTime": 5,
+        "headingCount": 23,
+        "imageCount": 4,
+        "linkCount": 21
+      },
+      "seo": {}
+    }
+  ]
+}

@@ -1,0 +1,437 @@
+{
+  "name": "Blog Automation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "blog-webhook",
+        "responseMode": "responseNode",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "blog-content-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "content-type-check",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "new_post",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "content-filter",
+      "name": "Content Type Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Валидация и трансформация данных поста\nconst payload = $json;\n\n// Проверка обязательных полей\nconst requiredFields = ['title', 'content', 'author'];\nconst missingFields = requiredFields.filter(field => !payload[field]);\n\nif (missingFields.length > 0) {\n  throw new Error(`Missing required fields: ${missingFields.join(', ')}`);\n}\n\n// Генерация slug из заголовка\nfunction generateSlug(title) {\n  return title\n    .toLowerCase()\n    .replace(/[^a-z0-9\\s-]/g, '')\n    .replace(/\\s+/g, '-')\n    .replace(/-+/g, '-')\n    .trim();\n}\n\n// Подсчет времени чтения (примерно 200 слов в минуту)\nfunction calculateReadingTime(content) {\n  const wordCount = content.trim().split(/\\s+/).length;\n  const minutes = Math.ceil(wordCount / 200);\n  return `${minutes} мин чтения`;\n}\n\n// Извлечение excerpt из контента (первые 150 символов)\nfunction generateExcerpt(content) {\n  const plainText = content.replace(/[#*`\\[\\]]/g, '').trim();\n  return plainText.length > 150 \n    ? plainText.substring(0, 150) + '...'\n    : plainText;\n}\n\n// Формирование структурированных данных\nconst processedData = {\n  frontmatter: {\n    title: payload.title,\n    description: payload.description || generateExcerpt(payload.content),\n    publishedAt: payload.publishedAt || new Date().toISOString(),\n    author: {\n      name: payload.author.name || payload.author,\n      bio: payload.author.bio || '',\n      social: payload.author.social || {}\n    },\n    excerpt: payload.excerpt || generateExcerpt(payload.content),\n    tags: payload.tags || [],\n    category: payload.category || 'General',\n    readingTime: calculateReadingTime(payload.content),\n    featured: payload.featured || false,\n    draft: payload.draft || false,\n    coverImage: payload.coverImage || null,\n    coverImageAlt: payload.coverImageAlt || null,\n    seo: payload.seo || {}\n  },\n  content: payload.content,\n  slug: payload.slug || generateSlug(payload.title)\n};\n\nreturn {\n  json: processedData,\n  originalPayload: payload\n};\n"
+      },
+      "id": "data-processor",
+      "name": "Data Processing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.BLOG_API_URL }}/api/webhook/content",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Signature",
+              "value": "={{ $env.WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "blog-api-call",
+      "name": "Send to Blog API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "success-filter",
+      "name": "Success Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.GITHUB_API_URL }}/repos/{{ $env.GITHUB_REPO }}/dispatches",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "token {{ $env.GITHUB_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={\n  \"event_type\": \"new-blog-post\",\n  \"client_payload\": {\n    \"filename\": \"{{ $('Send to Blog API').item.json.filename }}\",\n    \"action\": \"deploy\",\n    \"timestamp\": \"{{ new Date().toISOString() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "github-dispatch",
+      "name": "Trigger GitHub Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={\n  \"text\": \"🎉 Новая статья опубликована!\",\n  \"channel\": \"#blog\",\n  \"username\": \"Blog Bot\",\n  \"icon_emoji\": \":memo:\",\n  \"attachments\": [\n    {\n      \"color\": \"good\",\n      \"fields\": [\n        {\n          \"title\": \"Заголовок\",\n          \"value\": \"{{ $('Data Processing').item.json.frontmatter.title }}\",\n          \"short\": false\n        },\n        {\n          \"title\": \"Автор\",\n          \"value\": \"{{ $('Data Processing').item.json.frontmatter.author.name }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Категория\",\n          \"value\": \"{{ $('Data Processing').item.json.frontmatter.category }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Время чтения\",\n          \"value\": \"{{ $('Data Processing').item.json.frontmatter.readingTime }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Файл\",\n          \"value\": \"{{ $('Send to Blog API').item.json.filename }}\",\n          \"short\": true\n        }\n      ],\n      \"actions\": [\n        {\n          \"type\": \"button\",\n          \"text\": \"Посмотреть пост\",\n          \"url\": \"{{ $env.BLOG_URL }}/posts/{{ $('Data Processing').item.json.slug }}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "slack-notification",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Задержка перед индексацией (даем время на деплой)\nawait new Promise(resolve => setTimeout(resolve, 60000)); // 1 минута\n\n// Формируем URL для индексации\nconst slug = $('Data Processing').item.json.slug;\nconst postUrl = `${process.env.BLOG_URL}/posts/${slug}`;\n\nreturn {\n  json: {\n    url: postUrl,\n    action: 'index'\n  }\n};\n"
+      },
+      "id": "indexing-delay",
+      "name": "Indexing Delay",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://indexing.googleapis.com/v3/urlNotifications:publish",
+        "authentication": "googleOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={\n  \"url\": \"{{ $json.url }}\",\n  \"type\": \"URL_UPDATED\"\n}",
+        "options": {}
+      },
+      "id": "google-indexing",
+      "name": "Google Indexing API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={\n  \"text\": \"❌ Ошибка при создании поста\",\n  \"channel\": \"#blog-errors\",\n  \"username\": \"Blog Bot\",\n  \"icon_emoji\": \":warning:\",\n  \"attachments\": [\n    {\n      \"color\": \"danger\",\n      \"fields\": [\n        {\n          \"title\": \"Ошибка\",\n          \"value\": \"{{ $('Send to Blog API').item.json.error || 'Unknown error' }}\",\n          \"short\": false\n        },\n        {\n          \"title\": \"Payload\",\n          \"value\": \"```{{ JSON.stringify($('Data Processing').item.originalPayload, null, 2) }}```\",\n          \"short\": false\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "error-notification",
+      "name": "Error Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": {{ $('Send to Blog API').item.json.success || false }},\n  \"message\": \"{{ $('Send to Blog API').item.json.message || 'Post processing completed' }}\",\n  \"filename\": \"{{ $('Send to Blog API').item.json.filename || null }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"Invalid request: not a new post action\",\n  \"received_action\": \"{{ $json.action || 'undefined' }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "invalid-request-response",
+      "name": "Invalid Request Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        380
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Content Type Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content Type Filter": {
+      "main": [
+        [
+          {
+            "node": "Data Processing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Request Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Processing": {
+      "main": [
+        [
+          {
+            "node": "Send to Blog API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Blog API": {
+      "main": [
+        [
+          {
+            "node": "Success Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success Check": {
+      "main": [
+        [
+          {
+            "node": "Trigger GitHub Action",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger GitHub Action": {
+      "main": [
+        [
+          {
+            "node": "Indexing Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Indexing Delay": {
+      "main": [
+        [
+          {
+            "node": "Google Indexing API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Indexing API": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notification": {
+      "main": [
+        []
+      ]
+    },
+    "Error Notification": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler-workflow"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "blog-automation-workflow",
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "blog",
+      "name": "blog"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z", 
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "automation",
+      "name": "automation"
+    }
+  ]
+} 

@@ -1,0 +1,51 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Sidebar from '../components/Sidebar.astro';
+import RightSidebar from '../components/RightSidebar.astro';
+
+export interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  article?: boolean;
+  canonicalURL?: string;
+  currentPath?: string;
+}
+
+const { currentPath = '/', ...baseProps } = Astro.props;
+const isHomePage = currentPath === '/';
+---
+
+<BaseLayout {...baseProps}>
+  <Header currentPath={currentPath} />
+  
+  <!-- Контейнер с фиксированной шириной для трех колонок -->
+  <div class="w-full flex justify-center px-4 sm:px-6 lg:px-8">
+    <div class="flex gap-8 pt-24" style="width: 1244px; max-width: calc(100vw - 32px);">
+      <!-- Левый сайдбар -->
+      <div class="w-[260px] flex-shrink-0 sticky top-24 h-fit">
+        <aside class="w-[260px]">
+          <Sidebar />
+        </aside>
+      </div>
+      
+      <!-- Основной контент -->
+      <main class={isHomePage ? "flex-1 w-[660px]" : "flex-1 w-[920px]"}>
+        <div id="main-content">
+          <slot />
+        </div>
+      </main>
+      
+      <!-- Правый сайдбар (только на главной) -->
+      {isHomePage && (
+        <div class="w-[260px] flex-shrink-0">
+          <RightSidebar />
+        </div>
+      )}
+    </div>
+  </div>
+  
+  <Footer />
+</BaseLayout> 

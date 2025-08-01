@@ -1,0 +1,408 @@
+---
+export interface Props {
+  postSlug: string;
+  postTitle: string;
+  postUrl?: string;
+}
+
+const { postSlug, postTitle, postUrl } = Astro.props;
+const fullUrl = postUrl || `${Astro.site}/posts/${postSlug}`;
+---
+
+<div class="post-interactions flex items-center justify-between py-6 border-t border-b border-gray-200 dark:border-gray-700">
+  <!-- Левая часть: лайки и реакции -->
+  <div class="flex items-center gap-4">
+    <!-- Кнопка лайков -->
+    <button class="like-button flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-post-slug={postSlug}>
+      <svg class="like-icon w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"></path>
+      </svg>
+      <span class="like-count text-sm font-medium text-gray-900 dark:text-white">0</span>
+    </button>
+    
+    <!-- Кнопка смайлика -->
+    <button class="reaction-button p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+      <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+        <line x1="9" y1="9" x2="9.01" y2="9"></line>
+        <line x1="15" y1="9" x2="15.01" y2="9"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Правая часть: статистика и действия -->
+  <div class="flex items-center gap-6">
+    <!-- Комментарии -->
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+      </svg>
+      <span class="comments-count text-sm">0</span>
+    </div>
+
+    <!-- Закладки -->
+    <button class="bookmark-button flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" data-post-slug={postSlug}>
+      <svg class="bookmark-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+      </svg>
+      <span class="bookmarks-count text-sm text-gray-900 dark:text-white">0</span>
+    </button>
+
+    <!-- Просмотры -->
+    <div class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+      </svg>
+      <span class="views-count text-sm">0</span>
+    </div>
+
+    <!-- Кнопка "Поделиться" -->
+    <button class="share-button flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+      </svg>
+      <span class="text-sm font-medium">Поділитися</span>
+    </button>
+  </div>
+</div>
+
+<!-- Модальное окно для "Поделиться" -->
+<div id="share-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Поділитися статтею</h3>
+      <button id="close-share-modal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="space-y-3">
+      <!-- Копировать ссылку -->
+      <button id="copy-link" class="w-full flex items-center gap-3 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+        <span class="text-gray-900 dark:text-white">Скопіювати посилання</span>
+      </button>
+
+      <!-- Telegram -->
+      <a href={`https://t.me/share/url?url=${encodeURIComponent(fullUrl)}&text=${encodeURIComponent(postTitle)}`} target="_blank" class="w-full flex items-center gap-3 p-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+        </svg>
+        <span>Telegram</span>
+      </a>
+
+      <!-- Facebook -->
+      <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(fullUrl)}`} target="_blank" class="w-full flex items-center gap-3 p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+        <span>Facebook</span>
+      </a>
+
+      <!-- Twitter -->
+      <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(fullUrl)}&text=${encodeURIComponent(postTitle)}`} target="_blank" class="w-full flex items-center gap-3 p-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+        </svg>
+        <span>Twitter</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ postSlug, postTitle, fullUrl }}>
+  document.addEventListener('DOMContentLoaded', function() {
+    initializePostInteractions();
+  });
+
+  function initializePostInteractions() {
+    // Инициализация лайков
+    initializeLikes();
+    
+    // Инициализация закладок
+    initializeBookmarks();
+    
+    // Инициализация просмотров
+    initializeViews();
+    
+    // Инициализация комментариев
+    initializeCommentsCounter();
+    
+    // Инициализация поделиться
+    initializeShare();
+  }
+
+  function initializeLikes() {
+    const likeButton = document.querySelector('.like-button');
+    if (!likeButton) return;
+    
+    const likeIcon = likeButton.querySelector('.like-icon');
+    const likeCount = likeButton.querySelector('.like-count');
+    
+    // Загружаем состояние лайка из localStorage
+    const isLiked = localStorage.getItem(`like_${postSlug}`) === 'true';
+    const currentLikes = parseInt(localStorage.getItem(`likes_${postSlug}`)) || Math.floor(Math.random() * 10) + 1;
+    
+    // Устанавливаем начальное состояние
+    if (isLiked) {
+      likeIcon.style.fill = '#ef4444'; // red-500
+      likeButton.classList.add('liked');
+    }
+    
+    likeCount.textContent = currentLikes;
+    
+    // Обработчик клика
+    likeButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const isCurrentlyLiked = likeButton.classList.contains('liked');
+      let newLikes = parseInt(likeCount.textContent);
+      
+      if (isCurrentlyLiked) {
+        // Убираем лайк
+        likeButton.classList.remove('liked');
+        likeIcon.style.fill = '#6b7280'; // gray-500
+        newLikes = Math.max(0, newLikes - 1);
+        localStorage.setItem(`like_${postSlug}`, 'false');
+      } else {
+        // Добавляем лайк
+        likeButton.classList.add('liked');
+        likeIcon.style.fill = '#ef4444'; // red-500
+        newLikes += 1;
+        localStorage.setItem(`like_${postSlug}`, 'true');
+      }
+      
+      likeCount.textContent = newLikes;
+      localStorage.setItem(`likes_${postSlug}`, newLikes.toString());
+      
+      // Анимация
+      likeButton.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        likeButton.style.transform = 'scale(1)';
+      }, 150);
+    });
+  }
+
+  function initializeBookmarks() {
+    const bookmarkButton = document.querySelector('.bookmark-button');
+    if (!bookmarkButton) return;
+    
+    const bookmarkIcon = bookmarkButton.querySelector('.bookmark-icon');
+    const bookmarksCount = bookmarkButton.querySelector('.bookmarks-count');
+    
+    // Функция обновления состояния закладки
+    function updateBookmarkState() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      
+      if (user) {
+        // Получаем персональные закладки пользователя
+        const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+        const isBookmarked = userBookmarks.includes(postSlug);
+        
+        // Получаем общее количество закладок для этой статьи
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        
+        // Устанавливаем визуальное состояние
+        if (isBookmarked) {
+          bookmarkIcon.style.fill = '#3b82f6'; // blue-500
+          bookmarkIcon.style.stroke = '#3b82f6';
+          bookmarkButton.classList.add('bookmarked');
+          bookmarkButton.title = 'Видалити з закладок';
+        } else {
+          bookmarkIcon.style.fill = 'none';
+          bookmarkIcon.style.stroke = 'currentColor';
+          bookmarkButton.classList.remove('bookmarked');
+          bookmarkButton.title = 'Додати в закладки';
+        }
+        
+        bookmarksCount.textContent = totalBookmarks;
+      } else {
+        // Для неавторизованных пользователей показываем только общее количество
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        bookmarksCount.textContent = totalBookmarks;
+        
+        bookmarkIcon.style.fill = 'none';
+        bookmarkIcon.style.stroke = 'currentColor';
+        bookmarkButton.classList.remove('bookmarked');
+        bookmarkButton.title = 'Увійдіть, щоб додати в закладки';
+      }
+    }
+    
+    // Инициализация состояния
+    updateBookmarkState();
+    
+    // Обработчик клика
+    bookmarkButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      
+      if (!user) {
+        // Показываем уведомление о необходимости авторизации
+        showNotification('Увійдіть, щоб додавати статті в закладки', false);
+        return;
+      }
+      
+      const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+      const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+      const isCurrentlyBookmarked = userBookmarks.includes(postSlug);
+      
+      let updatedUserBookmarks = [...userBookmarks];
+      let updatedAllBookmarks = { ...allBookmarks };
+      
+      if (isCurrentlyBookmarked) {
+        // Убираем из закладок
+        updatedUserBookmarks = updatedUserBookmarks.filter(slug => slug !== postSlug);
+        updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 1) - 1);
+        
+        showNotification('Видалено з закладок', false);
+      } else {
+        // Добавляем в закладки
+        updatedUserBookmarks.push(postSlug);
+        updatedAllBookmarks[postSlug] = (updatedAllBookmarks[postSlug] || 0) + 1;
+        
+        showNotification('Додано в закладки', true);
+      }
+      
+      // Сохраняем обновленные данные
+      localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedUserBookmarks));
+      localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
+      
+      // Обновляем состояние
+      updateBookmarkState();
+      
+      // Анимация
+      bookmarkButton.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        bookmarkButton.style.transform = 'scale(1)';
+      }, 150);
+    });
+    
+    // Слушаем изменения авторизации
+    window.addEventListener('userAuthChanged', updateBookmarkState);
+  }
+
+  function initializeViews() {
+    const viewsCount = document.querySelector('.views-count');
+    if (!viewsCount) return;
+    
+    // Загружаем количество просмотров из localStorage
+    let currentViews = parseInt(localStorage.getItem(`views_${postSlug}`)) || Math.floor(Math.random() * 500) + 100;
+    
+    // Увеличиваем просмотры при загрузке страницы
+    currentViews += 1;
+    viewsCount.textContent = currentViews;
+    localStorage.setItem(`views_${postSlug}`, currentViews.toString());
+  }
+
+  function initializeCommentsCounter() {
+    const commentsCount = document.querySelector('.comments-count');
+    if (!commentsCount) return;
+    
+    // Загружаем количество комментариев из localStorage
+    const comments = JSON.parse(localStorage.getItem(`comments_${postSlug}`) || '[]');
+    commentsCount.textContent = comments.length;
+  }
+
+  function initializeShare() {
+    const shareButton = document.querySelector('.share-button');
+    const shareModal = document.getElementById('share-modal');
+    const closeShareModal = document.getElementById('close-share-modal');
+    const copyLinkButton = document.getElementById('copy-link');
+    
+    // Открытие модального окна
+    shareButton?.addEventListener('click', () => {
+      shareModal?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+    
+    // Закрытие модального окна
+    closeShareModal?.addEventListener('click', () => {
+      shareModal?.classList.add('hidden');
+      document.body.style.overflow = '';
+    });
+    
+    // Закрытие по клику вне модального окна
+    shareModal?.addEventListener('click', (e) => {
+      if (e.target === shareModal) {
+        shareModal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    });
+    
+    // Копирование ссылки
+    copyLinkButton?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        showNotification('Посилання скопійовано!', true);
+        shareModal?.classList.add('hidden');
+        document.body.style.overflow = '';
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+        showNotification('Помилка копіювання', false);
+      }
+    });
+  }
+
+  // Функция для показа уведомлений
+  function showNotification(message, isSuccess = true) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white text-sm font-medium transition-all duration-300 transform translate-x-full ${
+      isSuccess ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Анимация появления
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Удаление через 3 секунды
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  }
+</script>
+
+<style>
+  /* Анимации для кнопок */
+  .like-button, .bookmark-button {
+    transition: transform 0.15s ease-in-out;
+  }
+  
+  .like-button.liked .like-icon {
+    animation: heartBeat 0.3s ease-in-out;
+  }
+  
+  .bookmark-button.bookmarked .bookmark-icon {
+    animation: bookmarkSave 0.3s ease-in-out;
+  }
+  
+  @keyframes heartBeat {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes bookmarkSave {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.1) rotate(-5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+</style> 

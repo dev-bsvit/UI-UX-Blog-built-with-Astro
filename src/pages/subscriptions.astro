@@ -1,0 +1,35 @@
+---
+import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
+---
+
+<LayoutWithSidebar
+  title="Підписки"
+  description="Ваші підписки на авторів та категорії"
+  currentPath="/subscriptions"
+>
+  <div>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+      Підписки
+    </h1>
+    
+    <div class="text-center py-12">
+      <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 8H4V6h16v2zm-2-6H6v2h12V2zm4 10v8c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-8c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2zm-6 4l-6-3.27v6.53L16 16z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        У вас поки немає підписок
+      </h2>
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
+        Підпишіться на авторів, щоб не пропускати їхні нові статті
+      </p>
+      <a 
+        href="/" 
+        class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+      >
+        Переглянути статті
+      </a>
+    </div>
+  </div>
+</LayoutWithSidebar> 

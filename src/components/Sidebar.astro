@@ -1,0 +1,41 @@
+---
+export interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+
+const menuItems = [
+  { href: '/', label: 'Лента', icon: '🏠', active: currentPath === '/' },
+  { href: '/subscriptions', label: 'Подписки', icon: '📋', active: currentPath === '/subscriptions' },
+  { href: '/saved', label: 'Избранное', icon: '🔖', active: currentPath === '/saved' },
+];
+---
+
+<aside class="w-[260px]">
+  <nav class="bg-white dark:bg-gray-800 rounded-3xl p-4 w-[260px]">
+    <ul class="space-y-3">
+      {menuItems.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class={`flex items-center gap-3 px-2 py-3 rounded-2xl transition-colors ${
+              item.active
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <div class={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              item.active 
+                ? 'bg-white dark:bg-gray-600' 
+                : 'bg-gray-100 dark:bg-gray-700'
+            }`}>
+              <span class="text-lg">{item.icon}</span>
+            </div>
+            <span class="font-medium text-base">{item.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</aside> 

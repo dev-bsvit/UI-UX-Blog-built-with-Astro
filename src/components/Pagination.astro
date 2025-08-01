@@ -1,0 +1,195 @@
+---
+export interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseUrl: string;
+  showPrevNext?: boolean;
+  maxVisiblePages?: number;
+  className?: string;
+}
+
+const {
+  currentPage,
+  totalPages,
+  baseUrl,
+  showPrevNext = true,
+  maxVisiblePages = 7,
+  className = '',
+} = Astro.props;
+
+// Функция для генерации URL страницы
+const getPageUrl = (page: number) => {
+  if (page === 1) {
+    return baseUrl;
+  }
+  return `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}page/${page}`;
+};
+
+// Логика для определения видимых страниц
+const getVisiblePages = () => {
+  if (totalPages <= maxVisiblePages) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const halfVisible = Math.floor(maxVisiblePages / 2);
+  let start = Math.max(1, currentPage - halfVisible);
+  let end = Math.min(totalPages, currentPage + halfVisible);
+
+  // Корректировка если достигли границ
+  if (currentPage <= halfVisible) {
+    end = Math.min(totalPages, maxVisiblePages);
+  }
+  if (currentPage >= totalPages - halfVisible) {
+    start = Math.max(1, totalPages - maxVisiblePages + 1);
+  }
+
+  const pages = [];
+  
+  // Добавить первую страницу если нужно
+  if (start > 1) {
+    pages.push(1);
+    if (start > 2) {
+      pages.push('...');
+    }
+  }
+  
+  // Добавить видимые страницы
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  
+  // Добавить последнюю страницу если нужно
+  if (end < totalPages) {
+    if (end < totalPages - 1) {
+      pages.push('...');
+    }
+    pages.push(totalPages);
+  }
+  
+  return pages;
+};
+
+const visiblePages = getVisiblePages();
+const hasPrev = currentPage > 1;
+const hasNext = currentPage < totalPages;
+---
+
+{totalPages > 1 && (
+  <nav 
+    class={`flex items-center justify-center space-x-1 ${className}`}
+    aria-label="Навигация по страницам"
+  >
+    <!-- Previous Button -->
+    {showPrevNext && (
+      <a
+        href={hasPrev ? getPageUrl(currentPage - 1) : undefined}
+        class={`
+          inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200
+          ${hasPrev 
+            ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400' 
+            : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+          }
+        `}
+        aria-label="Предыдущая страница"
+        {...(!hasPrev && { 'aria-disabled': 'true', tabindex: '-1' })}
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </a>
+    )}
+
+    <!-- Page Numbers -->
+    {visiblePages.map((page) => {
+      if (page === '...') {
+        return (
+          <span class="inline-flex items-center justify-center w-10 h-10 text-gray-500 dark:text-gray-400">
+            ⋯
+          </span>
+        );
+      }
+      
+      const isCurrentPage = page === currentPage;
+      return (
+        <a
+          href={!isCurrentPage ? getPageUrl(page as number) : undefined}
+          class={`
+            inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200
+            ${isCurrentPage
+              ? 'bg-primary-600 text-white shadow-sm'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400'
+            }
+          `}
+          aria-label={isCurrentPage ? `Текущая страница ${page}` : `Перейти на страницу ${page}`}
+          {...(isCurrentPage && { 'aria-current': 'page' })}
+        >
+          {page}
+        </a>
+      );
+    })}
+
+    <!-- Next Button -->
+    {showPrevNext && (
+      <a
+        href={hasNext ? getPageUrl(currentPage + 1) : undefined}
+        class={`
+          inline-flex items-center justify-center w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200
+          ${hasNext 
+            ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400' 
+            : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+          }
+        `}
+        aria-label="Следующая страница"
+        {...(!hasNext && { 'aria-disabled': 'true', tabindex: '-1' })}
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    )}
+  </nav>
+)}
+
+<!-- Page Info (for screen readers and mobile) -->
+{totalPages > 1 && (
+  <div class="mt-4 text-center">
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+      Страница <span class="font-medium">{currentPage}</span> из <span class="font-medium">{totalPages}</span>
+    </p>
+  </div>
+)}
+
+<style>
+  /* Дополнительные стили для активных элементов */
+  a[aria-current="page"] {
+    position: relative;
+  }
+  
+  a[aria-current="page"]::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 10px;
+    background: linear-gradient(45deg, transparent, rgba(14, 165, 233, 0.3), transparent);
+    z-index: -1;
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  
+  /* Responsive improvements */
+  @media (max-width: 640px) {
+    nav {
+      gap: 0.25rem;
+    }
+    
+    .pagination-btn {
+      width: 2.25rem;
+      height: 2.25rem;
+      font-size: 0.875rem;
+    }
+  }
+</style> 

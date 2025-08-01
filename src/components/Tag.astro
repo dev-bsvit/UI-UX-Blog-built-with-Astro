@@ -1,0 +1,117 @@
+---
+export interface Props {
+  variant?: 'filled' | 'outline' | 'subtle';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'purple' | 'green' | 'blue' | 'pink';
+  href?: string;
+  clickable?: boolean;
+}
+
+const {
+  variant = 'filled',
+  size = 'md',
+  color = 'primary',
+  href,
+  clickable = false,
+} = Astro.props;
+
+// Размеры
+const sizeClasses = {
+  xs: 'px-2 py-0.5 text-xs',
+  sm: 'px-2.5 py-0.5 text-xs',
+  md: 'px-3 py-1 text-sm',
+  lg: 'px-4 py-1.5 text-base',
+};
+
+// Цветовые схемы для разных вариантов
+const colorSchemes = {
+  primary: {
+    filled: 'bg-primary-600 text-white hover:bg-primary-700',
+    outline: 'border border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20',
+    subtle: 'bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50',
+  },
+  secondary: {
+    filled: 'bg-gray-600 text-white hover:bg-gray-700',
+    outline: 'border border-gray-600 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50',
+    subtle: 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
+  },
+  success: {
+    filled: 'bg-green-600 text-white hover:bg-green-700',
+    outline: 'border border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20',
+    subtle: 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50',
+  },
+  warning: {
+    filled: 'bg-yellow-600 text-white hover:bg-yellow-700',
+    outline: 'border border-yellow-600 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
+    subtle: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50',
+  },
+  error: {
+    filled: 'bg-red-600 text-white hover:bg-red-700',
+    outline: 'border border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20',
+    subtle: 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50',
+  },
+  purple: {
+    filled: 'bg-purple-600 text-white hover:bg-purple-700',
+    outline: 'border border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20',
+    subtle: 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50',
+  },
+  green: {
+    filled: 'bg-emerald-600 text-white hover:bg-emerald-700',
+    outline: 'border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20',
+    subtle: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50',
+  },
+  blue: {
+    filled: 'bg-blue-600 text-white hover:bg-blue-700',
+    outline: 'border border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20',
+    subtle: 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50',
+  },
+  pink: {
+    filled: 'bg-pink-600 text-white hover:bg-pink-700',
+    outline: 'border border-pink-600 text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-900/20',
+    subtle: 'bg-pink-100 text-pink-700 hover:bg-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:hover:bg-pink-900/50',
+  },
+};
+
+const baseClasses = 'inline-flex items-center font-medium rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-900';
+const interactiveClasses = href || clickable ? 'cursor-pointer hover:scale-105 active:scale-95' : '';
+
+const tagClasses = `
+  ${baseClasses}
+  ${sizeClasses[size]}
+  ${colorSchemes[color][variant]}
+  ${interactiveClasses}
+`.trim();
+
+const TagElement = href ? 'a' : 'span';
+---
+
+<TagElement 
+  class={tagClasses}
+  href={href}
+  {...(href && { rel: 'noopener' })}
+>
+  <slot />
+</TagElement>
+
+<style>
+  /* Дополнительные стили для hover эффектов */
+  .tag-animated {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .tag-animated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+  
+  .tag-animated:hover::before {
+    left: 100%;
+  }
+</style> 

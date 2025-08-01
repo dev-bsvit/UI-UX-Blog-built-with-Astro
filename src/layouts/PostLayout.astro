@@ -1,0 +1,313 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import AuthorBadge from '../components/AuthorBadge.astro';
+import Tag from '../components/Tag.astro';
+import type { CollectionEntry } from 'astro:content';
+
+export interface Props {
+  post: CollectionEntry<'posts'>;
+  relatedPosts?: CollectionEntry<'posts'>[];
+}
+
+const { post, relatedPosts = [] } = Astro.props;
+const { data, slug } = post;
+
+// Форматирование даты
+const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString('uk-UA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// URL поста
+const postUrl = new URL(`/posts/${slug}`, Astro.site);
+const siteUrl = Astro.site?.href || 'https://localhost:4321';
+
+// SEO данные
+const seoTitle = data.seo?.metaTitle || data.title;
+const seoDescription = data.seo?.metaDescription || data.description;
+const ogImage = data.seo?.ogImage || data.coverImage || '/og-image.jpg';
+
+// JSON-LD для Article
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": data.title,
+  "description": data.description,
+  "image": data.coverImage ? new URL(data.coverImage, siteUrl).href : new URL('/og-image.jpg', siteUrl).href,
+  "url": postUrl.href,
+  "datePublished": new Date(data.publishedAt).toISOString(),
+  "dateModified": new Date(data.updatedAt || data.publishedAt).toISOString(),
+  "author": {
+    "@type": "Person",
+    "name": data.author.name,
+    ...(data.author.bio && { "description": data.author.bio }),
+    ...(data.author.social?.website && { "url": data.author.social.website }),
+    ...(data.author.social?.twitter && { 
+      "sameAs": [`https://twitter.com/${data.author.social.twitter}`]
+    })
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "UI/UX Блог",
+    "url": siteUrl,
+    "logo": {
+      "@type": "ImageObject",
+      "url": new URL('/icons/icon-192x192.png', siteUrl).href
+    }
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": postUrl.href
+  },
+  "keywords": data.tags.join(', '),
+  "articleSection": data.category,
+  "wordCount": 0, // Will be populated by remark plugin later
+  "timeRequired": data.readingTime,
+  "inLanguage": "ru-RU",
+  ...(data.featured && { "position": 1 })
+};
+
+// Хлебные крошки JSON-LD
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Головна",
+        "item": siteUrl
+      },
+      {
+        "@type": "ListItem", 
+        "position": 2,
+        "name": "Статті",
+        "item": new URL('/posts', siteUrl).href
+      },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": data.category,
+      "item": new URL(`/categories/${data.category.toLowerCase()}`, siteUrl).href
+    },
+    {
+      "@type": "ListItem",
+      "position": 4,
+      "name": data.title,
+      "item": postUrl.href
+    }
+  ]
+};
+---
+
+<BaseLayout 
+  title={seoTitle}
+  description={seoDescription}
+  image={ogImage}
+  article={true}
+  canonicalURL={data.seo?.canonicalUrl ? new URL(data.seo.canonicalUrl).href : postUrl.href}
+>
+  <!-- Дополнительные мета-теги для статей -->
+  <meta slot="head" property="article:published_time" content={new Date(data.publishedAt).toISOString()} />
+  {data.updatedAt && (
+    <meta slot="head" property="article:modified_time" content={new Date(data.updatedAt).toISOString()} />
+  )}
+  <meta slot="head" property="article:author" content={data.author.name} />
+  <meta slot="head" property="article:section" content={data.category} />
+  {data.tags.map(tag => (
+    <meta slot="head" property="article:tag" content={tag} />
+  ))}
+  
+  <!-- JSON-LD для Article -->
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  
+  <!-- JSON-LD для хлебных крошек -->
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
+  
+  <!-- Preload для изображения статьи -->
+  {data.coverImage && (
+    <link slot="head" rel="preload" as="image" href={data.coverImage} />
+  )}
+
+  <Header currentPath="/posts" />
+
+  <main id="main-content" class="flex-1">
+    <!-- Хлебные крошки -->
+                    <nav class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Breadcrumb">
+                  <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                    <li>
+                      <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                        Головна
+                      </a>
+                    </li>
+                    <li>
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                      </svg>
+                    </li>
+                    <li>
+                      <a href="/posts" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                        Статті
+                      </a>
+                    </li>
+        <li>
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+        </li>
+        <li>
+          <a href={`/categories/${data.category.toLowerCase()}`} class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+            {data.category}
+          </a>
+        </li>
+        <li>
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+          </svg>
+        </li>
+        <li class="text-gray-900 dark:text-white font-medium truncate">
+          {data.title}
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Заголовок статьи -->
+    <header class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {data.featured && (
+        <div class="mb-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        Рекомендуємо
+                      </span>
+        </div>
+      )}
+
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+        {data.title}
+      </h1>
+
+      <p class="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+        {data.description}
+      </p>
+
+      <!-- Мета-информация -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 border-t border-b border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-4">
+          <AuthorBadge 
+            name={data.author.name}
+            avatar={data.author.avatar}
+            size="lg"
+            showRole={true}
+            role={data.author.bio}
+          />
+        </div>
+
+        <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <time datetime={new Date(data.publishedAt).toISOString()}>
+            {formatDate(new Date(data.publishedAt))}
+          </time>
+          <span>•</span>
+          <span>{data.readingTime}</span>
+                                {data.updatedAt && (
+                        <>
+                          <span>•</span>
+                          <span title={`Оновлено ${formatDate(new Date(data.updatedAt))}`}>
+                            Оновлено
+                          </span>
+                        </>
+                      )}
+        </div>
+      </div>
+
+      <!-- Теги -->
+      <div class="flex flex-wrap gap-2 mt-6">
+        {data.tags.map(tag => (
+          <Tag variant="subtle" size="sm" href={`/tags/${tag.toLowerCase()}`}>
+            {tag}
+          </Tag>
+        ))}
+      </div>
+    </header>
+
+    <!-- Изображение статьи -->
+    {data.coverImage && (
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <img 
+          src={data.coverImage}
+          alt={data.coverImageAlt || data.title}
+          class="w-full h-auto rounded-xl shadow-lg"
+          loading="eager"
+        />
+      </div>
+    )}
+
+    <!-- Контент статьи -->
+    <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="prose prose-lg dark:prose-invert max-w-none">
+        <slot />
+      </div>
+    </article>
+
+    <!-- Связанные статьи -->
+    {relatedPosts.length > 0 && (
+      <section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-12 border-t border-gray-200 dark:border-gray-800">
+                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+                      Схожі статті
+                    </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          {relatedPosts.slice(0, 2).map(related => (
+            <article class="card p-6 hover:-translate-y-1 transform transition-all duration-200">
+              <a href={`/posts/${related.slug}`}>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                  {related.data.title}
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
+                  {related.data.excerpt}
+                </p>
+                <div class="flex items-center justify-between mt-4">
+                  <time class="text-xs text-gray-500 dark:text-gray-400">
+                    {formatDate(new Date(related.data.publishedAt))}
+                  </time>
+                                                <span class="text-primary-600 dark:text-primary-400 text-sm font-medium">
+                                Читати →
+                              </span>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    )}
+
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  /* Дополнительные стили для typography */
+  .prose h2:first-of-type {
+    margin-top: 0;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style> 

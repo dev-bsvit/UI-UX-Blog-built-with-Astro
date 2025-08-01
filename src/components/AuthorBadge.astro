@@ -1,0 +1,126 @@
+---
+export interface Props {
+  name: string;
+  avatar?: string;
+  role?: string;
+  href?: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  showRole?: boolean;
+  className?: string;
+}
+
+const {
+  name,
+  avatar,
+  role = 'Автор',
+  href,
+  size = 'md',
+  showRole = false,
+  className = '',
+} = Astro.props;
+
+// Размеры для аватара и текста
+const sizeConfig = {
+  xs: {
+    avatar: 'w-4 h-4',
+    text: 'text-xs',
+    container: 'gap-1',
+  },
+  sm: {
+    avatar: 'w-6 h-6',
+    text: 'text-sm',
+    container: 'gap-1.5',
+  },
+  md: {
+    avatar: 'w-8 h-8',
+    text: 'text-sm',
+    container: 'gap-2',
+  },
+  lg: {
+    avatar: 'w-10 h-10',
+    text: 'text-base',
+    container: 'gap-2.5',
+  },
+};
+
+const config = sizeConfig[size];
+
+// Генерация инициалов из имени
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(word => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+// Генерация цвета фона для аватара без изображения
+const getAvatarColor = (name: string) => {
+  const colors = [
+    'bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500',
+    'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500',
+    'bg-cyan-500', 'bg-sky-500', 'bg-blue-500', 'bg-indigo-500',
+    'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500', 'bg-pink-500',
+    'bg-rose-500'
+  ];
+  
+  const hash = name.split('').reduce((acc, char) => {
+    return char.charCodeAt(0) + ((acc << 5) - acc);
+  }, 0);
+  
+  return colors[Math.abs(hash) % colors.length];
+};
+
+const baseClasses = `inline-flex items-center ${config.container} ${className}`;
+const interactiveClasses = href ? 'cursor-pointer hover:opacity-80 transition-opacity' : '';
+
+const containerClasses = `${baseClasses} ${interactiveClasses}`.trim();
+
+const AuthorElement = href ? 'a' : 'div';
+---
+
+<AuthorElement 
+  class={containerClasses}
+  href={href}
+  {...(href && { rel: 'noopener' })}
+>
+  <!-- Avatar -->
+  <div class={`${config.avatar} rounded-full overflow-hidden flex-shrink-0`}>
+    {avatar ? (
+      <img 
+        src={avatar}
+        alt={`${name} аватар`}
+        class="w-full h-full object-cover"
+        loading="lazy"
+      />
+    ) : (
+      <div class={`w-full h-full ${getAvatarColor(name)} flex items-center justify-center text-white font-semibold ${config.text}`}>
+        {getInitials(name)}
+      </div>
+    )}
+  </div>
+  
+  <!-- Name and Role -->
+  <div class="flex flex-col min-w-0">
+    <span class={`font-medium text-gray-900 dark:text-white truncate ${config.text}`}>
+      {name}
+    </span>
+    {showRole && role && (
+      <span class={`text-gray-500 dark:text-gray-400 truncate ${size === 'xs' ? 'text-xs' : 'text-xs'}`}>
+        {role}
+      </span>
+    )}
+  </div>
+</AuthorElement>
+
+<style>
+  /* Добавляем subtle hover эффект для интерактивных элементов */
+  a:hover .author-avatar {
+    transform: scale(1.05);
+  }
+  
+  .author-avatar {
+    transition: transform 0.2s ease;
+  }
+</style> 

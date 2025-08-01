@@ -1,0 +1,140 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import LayoutWithSidebar from '../../layouts/LayoutWithSidebar.astro';
+import AuthorBadge from '../../components/AuthorBadge.astro';
+import Tag from '../../components/Tag.astro';
+import Comments from '../../components/Comments.astro';
+import PostInteractions from '../../components/PostInteractions.astro';
+
+// Генерируем статические пути для всех постов
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => {
+    return !data.draft;
+  });
+
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+// Получаем данные поста
+type Props = {
+  post: CollectionEntry<'posts'>;
+};
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+
+// Получаем связанные посты (по тегам)
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+const relatedPosts = allPosts
+  .filter((p) => 
+    p.slug !== post.slug && 
+    p.data.tags.some(tag => post.data.tags.includes(tag))
+  )
+  .sort((a, b) => 
+    new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
+  )
+  .slice(0, 2);
+---
+
+<LayoutWithSidebar title={post.data.title} description={post.data.description} image={post.data.coverImage} article={true} currentPath={`/posts/${post.slug}`}>  
+  <!-- Хлебные крошки -->
+  <nav class="px-0 py-4" aria-label="Breadcrumb">
+    <ol class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+      <li><a href="/" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Головна</a></li>
+      <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></li>
+      <li><a href="/posts" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Статті</a></li>
+      <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></li>
+      <li><a href={`/categories/${post.data.category.toLowerCase()}`} class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">{post.data.category}</a></li>
+      <li><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg></li>
+      <li class="text-gray-900 dark:text-white font-medium truncate">{post.data.title}</li>
+    </ol>
+  </nav>
+
+  <!-- Карточка статьи с белым фоном -->
+  <article class="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden w-full">
+    
+    <!-- Заголовок статьи -->
+    <header class="p-6 pt-6">
+      {post.data.featured && (
+        <div class="mb-4">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+            Рекомендуємо
+          </span>
+        </div>
+      )}
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">{post.data.title}</h1>
+      <p class="text-xl text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">{post.data.description}</p>
+      <!-- Мета-информация -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-6 border-t border-b border-gray-200 dark:border-gray-800">
+        <div class="flex items-center gap-4">
+          <AuthorBadge name={post.data.author.name} avatar={post.data.author.avatar} size="lg" showRole={true} role={post.data.author.bio} />
+        </div>
+        <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <time datetime={new Date(post.data.publishedAt).toISOString()}>{new Date(post.data.publishedAt).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+          <span>•</span>
+          <span>{post.data.readingTime}</span>
+          {post.data.updatedAt && (<><span>•</span><span title={`Оновлено ${new Date(post.data.updatedAt).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}`}>Оновлено</span></>)}
+        </div>
+      </div>
+      <!-- Теги -->
+      <div class="flex flex-wrap gap-2 mt-6">
+        {post.data.tags.map(tag => (
+          <Tag variant="subtle" size="sm" href={`/tags/${tag.toLowerCase()}`}>{tag}</Tag>
+        ))}
+      </div>
+    </header>
+
+    <!-- Изображение статьи -->
+    {post.data.coverImage && (
+      <div class="mx-6 mb-6 rounded-2xl overflow-hidden">
+        <img src={post.data.coverImage} alt={post.data.coverImageAlt || post.data.title} class="w-full h-auto transition-transform duration-300 hover:scale-105" loading="eager" />
+      </div>
+    )}
+
+    <!-- Контент поста -->
+    <div class="prose prose-lg max-w-none dark:prose-invert prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-white prose-code:text-pink-600 dark:prose-code:text-pink-400 prose-pre:bg-gray-100 dark:prose-pre:bg-gray-800">
+      <Content />
+    </div>
+
+    <!-- Интерактивные элементы статьи -->
+    <PostInteractions 
+      postSlug={post.slug} 
+      postTitle={post.data.title}
+      postUrl={`${Astro.site}/posts/${post.slug}`}
+    />
+
+    <!-- Связанные статьи -->
+    {relatedPosts.length > 0 && (
+      <div class="px-6 pb-6">
+        <div class="pt-6 border-t border-gray-200 dark:border-gray-800">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-8">Схожі статті</h2>
+          <div class="grid md:grid-cols-2 gap-6">
+            {relatedPosts.slice(0, 2).map(related => (
+              <article class="card p-6 hover:-translate-y-1 transform transition-all duration-200">
+                <a href={`/posts/${related.slug}`}>
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">{related.data.title}</h3>
+                  <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">{related.data.excerpt}</p>
+                  <div class="flex items-center justify-between mt-4">
+                    <time class="text-xs text-gray-500 dark:text-gray-400">{new Date(related.data.publishedAt).toLocaleDateString('uk-UA', { year: 'numeric', month: 'long', day: 'numeric' })}</time>
+                    <span class="text-primary-600 dark:text-primary-400 text-sm font-medium">Читати →</span>
+                  </div>
+                </a>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Комментарии -->
+    <div class="px-6 pb-6">
+      <div class="pt-6 border-t border-gray-200 dark:border-gray-800">
+        <Comments postSlug={post.slug} />
+      </div>
+    </div>
+  </article>
+</LayoutWithSidebar> 

@@ -1,0 +1,303 @@
+---
+import { getCollection } from 'astro:content';
+import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
+import PostCard from '../components/PostCard.astro';
+
+// Получаем все посты для отображения сохраненных
+const allPosts = await getCollection('posts');
+---
+
+<LayoutWithSidebar title="Збережені статті | UI/UX Blog" description="Ваші збережені статті з UI/UX блогу">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Заголовок -->
+    <div class="mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        Збережені статті
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        Статті, які ви додали в закладки
+      </p>
+    </div>
+
+    <!-- Сообщение для неавторизованных пользователей -->
+    <div id="auth-required-message" class="hidden text-center py-12">
+      <div class="max-w-md mx-auto">
+        <div class="mb-6">
+          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Увійдіть, щоб переглянути закладки
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400">
+            Авторизуйтеся через Google, щоб зберігати та переглядати свої улюблені статті
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Контейнер для сохраненных статей -->
+    <div id="saved-posts-container" class="hidden">
+      <!-- Пустое состояние -->
+      <div id="empty-state" class="hidden text-center py-12">
+        <div class="max-w-md mx-auto">
+          <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+          </svg>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Поки що немає збережених статей
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-6">
+            Додавайте статті в закладки, клікаючи на іконку закладки на карточках статей
+          </p>
+          <a href="/" class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Переглянути всі статті
+          </a>
+        </div>
+      </div>
+
+      <!-- Список сохраненных статей -->
+      <div id="saved-posts-list" class="grid grid-cols-1 gap-4">
+        <!-- Статьи будут загружаться здесь через JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script define:vars={{ allPosts }}>
+    function loadSavedPosts() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const authRequiredMessage = document.getElementById('auth-required-message');
+      const savedPostsContainer = document.getElementById('saved-posts-container');
+      const emptyState = document.getElementById('empty-state');
+      const savedPostsList = document.getElementById('saved-posts-list');
+
+      if (!user) {
+        // Показываем сообщение о необходимости авторизации
+        authRequiredMessage?.classList.remove('hidden');
+        savedPostsContainer?.classList.add('hidden');
+        return;
+      }
+
+      // Пользователь авторизован
+      authRequiredMessage?.classList.add('hidden');
+      savedPostsContainer?.classList.remove('hidden');
+
+      // Получаем персональные закладки пользователя
+      const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+
+      if (userBookmarks.length === 0) {
+        // Показываем пустое состояние
+        emptyState?.classList.remove('hidden');
+        savedPostsList?.classList.add('hidden');
+        return;
+      }
+
+      // Фильтруем статьи по закладкам пользователя
+      const savedPosts = allPosts.filter(post => userBookmarks.includes(post.slug));
+
+      if (savedPosts.length === 0) {
+        emptyState?.classList.remove('hidden');
+        savedPostsList?.classList.add('hidden');
+        return;
+      }
+
+      // Показываем список сохраненных статей
+      emptyState?.classList.add('hidden');
+      savedPostsList?.classList.remove('hidden');
+
+      // Создаем HTML для каждой сохраненной статьи
+      savedPostsList.innerHTML = savedPosts.map(post => {
+        const publishedDate = new Date(post.data.publishedAt).toLocaleDateString('uk-UA', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        return `
+          <article class="card p-6 hover:-translate-y-1 transform transition-all duration-200" data-post-slug="${post.slug}">
+            <div class="flex flex-col md:flex-row gap-6">
+              <!-- Изображение статьи -->
+              <div class="md:w-48 md:flex-shrink-0">
+                <a href="/posts/${post.slug}" class="block">
+                  <img 
+                    src="/images/posts/${post.data.image}" 
+                    alt="${post.data.title}"
+                    class="w-full h-48 md:h-32 object-cover rounded-lg"
+                    onerror="this.src='/images/posts/default.png'"
+                  />
+                </a>
+              </div>
+              
+              <!-- Контент статьи -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex-1 min-w-0">
+                    <a href="/posts/${post.slug}">
+                      <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                        ${post.data.title}
+                      </h2>
+                    </a>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">
+                      ${post.data.description}
+                    </p>
+                  </div>
+                </div>
+                
+                <!-- Метаинформация -->
+                <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <div class="flex items-center gap-4">
+                    <span>${publishedDate}</span>
+                    <span class="px-2 py-1 bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 rounded-full text-xs">
+                      ${post.data.category}
+                    </span>
+                  </div>
+                  
+                  <!-- Интерактивные элементы -->
+                  <div class="flex items-center gap-4">
+                    <!-- Комментарии -->
+                    <button class="comments-button flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors" data-post-slug="${post.slug}">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                      </svg>
+                      <span class="comments-count">0</span>
+                    </button>
+                    
+                    <!-- Закладки -->
+                    <button class="bookmark-button flex items-center gap-1.5 hover:text-gray-700 dark:hover:text-gray-300 transition-colors bookmarked" data-post-slug="${post.slug}">
+                      <svg class="bookmark-icon w-4 h-4" fill="#3b82f6" stroke="#3b82f6" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                      </svg>
+                      <span class="bookmarks-count">0</span>
+                    </button>
+                    
+                    <!-- Просмотры -->
+                    <div class="flex items-center gap-1.5">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      <span class="views-count">0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      // Инициализируем интерактивные элементы для загруженных статей
+      initializeSavedPostsInteractions();
+    }
+
+    function initializeSavedPostsInteractions() {
+      // Инициализируем счетчики комментариев
+      const commentsButtons = document.querySelectorAll('#saved-posts-list .comments-button');
+      commentsButtons.forEach(button => {
+        const postSlug = button.getAttribute('data-post-slug');
+        const commentsCount = button.querySelector('.comments-count');
+        const comments = JSON.parse(localStorage.getItem(`comments_${postSlug}`) || '[]');
+        commentsCount.textContent = comments.length;
+        
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.location.href = `/posts/${postSlug}#comments`;
+        });
+      });
+
+      // Инициализируем закладки
+      const bookmarkButtons = document.querySelectorAll('#saved-posts-list .bookmark-button');
+      bookmarkButtons.forEach(button => {
+        const postSlug = button.getAttribute('data-post-slug');
+        const bookmarksCount = button.querySelector('.bookmarks-count');
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+        bookmarksCount.textContent = allBookmarks[postSlug] || 0;
+        
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const user = JSON.parse(localStorage.getItem('user') || 'null');
+          if (!user) return;
+          
+          // Удаляем из закладок
+          const userBookmarks = JSON.parse(localStorage.getItem(`user_bookmarks_${user.uid}`) || '[]');
+          const updatedUserBookmarks = userBookmarks.filter(slug => slug !== postSlug);
+          const updatedAllBookmarks = { ...allBookmarks };
+          updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 1) - 1);
+          
+          localStorage.setItem(`user_bookmarks_${user.uid}`, JSON.stringify(updatedUserBookmarks));
+          localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
+          
+          // Показываем уведомление
+          showNotification('Видалено з закладок', false);
+          
+          // Перезагружаем страницу
+          setTimeout(() => {
+            loadSavedPosts();
+          }, 500);
+        });
+      });
+
+      // Инициализируем просмотры
+      const viewsCounts = document.querySelectorAll('#saved-posts-list .views-count');
+      viewsCounts.forEach(viewsCount => {
+        const postSlug = viewsCount.closest('[data-post-slug]').getAttribute('data-post-slug');
+        const currentViews = parseInt(localStorage.getItem(`views_${postSlug}`)) || Math.floor(Math.random() * 500) + 100;
+        viewsCount.textContent = currentViews;
+      });
+    }
+
+    // Функция для показа уведомлений
+    function showNotification(message, isSuccess = true) {
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white text-sm font-medium transition-all duration-300 transform translate-x-full ${
+        isSuccess ? 'bg-green-500' : 'bg-red-500'
+      }`;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedPosts();
+      
+      // Слушаем изменения авторизации
+      window.addEventListener('userAuthChanged', () => {
+        setTimeout(loadSavedPosts, 100);
+      });
+    });
+  </script>
+
+  <style>
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</LayoutWithSidebar> 

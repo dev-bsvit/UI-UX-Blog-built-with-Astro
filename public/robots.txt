@@ -1,0 +1,49 @@
+# Robots.txt для UI/UX Блога
+# https://developers.google.com/search/docs/crawling-indexing/robots/intro
+
+User-agent: *
+Allow: /
+
+# Основні сторінки
+Allow: /posts/
+Allow: /categories/
+Allow: /about/
+Allow: /tags/
+
+# Статічні ресурси
+Allow: /images/
+Allow: /icons/
+Allow: /_astro/
+
+# Заборонені сторінки
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_/
+Disallow: /search?*
+
+# Спеціальні директиви для основних пошукових систем
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot  
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+# Sitemap
+Sitemap: https://your-domain.com.ua/sitemap-index.xml
+Sitemap: https://your-domain.com.ua/sitemap-0.xml
+
+# Додаткові обмеження
+Crawl-delay: 1
+
+# Заблокувати небажаних ботів
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: / 

@@ -1,0 +1,20 @@
+{
+  "name": "UI/UX Блог",
+  "short_name": "UI/UX Blog",
+  "description": "Блог про UI/UX дизайн, інтерфейси та користувацький досвід",
+  "lang": "uk",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["design", "blog", "ui", "ux"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+} 

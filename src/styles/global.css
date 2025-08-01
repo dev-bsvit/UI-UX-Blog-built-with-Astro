@@ -1,0 +1,299 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Variables для темної/світлої теми */
+:root {
+  --color-bg-primary: 242 243 247; /* Changed from 255 255 255 */
+  --color-bg-secondary: 249 250 251;
+  --color-text-primary: 17 24 39;
+  --color-text-secondary: 75 85 99;
+  --color-text-muted: 156 163 175;
+  --color-border: 229 231 235;
+  --color-border-hover: 209 213 219;
+  
+  /* Rainbow button colors */
+  --color-1: 0 100% 63%;
+  --color-2: 270 100% 63%;
+  --color-3: 210 100% 63%;
+  --color-4: 195 100% 63%;
+  --color-5: 90 100% 63%;
+  
+  /* Prose colors for typography */
+  --tw-prose-body: 55 65 81;
+  --tw-prose-headings: 17 24 39;
+  --tw-prose-lead: 55 65 81;
+  --tw-prose-links: 14 165 233;
+  --tw-prose-bold: 17 24 39;
+  --tw-prose-counters: 107 114 128;
+  --tw-prose-bullets: 209 213 219;
+  --tw-prose-hr: 229 231 235;
+  --tw-prose-quotes: 17 24 39;
+  --tw-prose-quote-borders: 229 231 235;
+  --tw-prose-captions: 107 114 128;
+  --tw-prose-code: 17 24 39;
+  --tw-prose-pre-code: 209 213 219;
+  --tw-prose-pre-bg: 31 41 55;
+  --tw-prose-th-borders: 209 213 219;
+  --tw-prose-td-borders: 229 231 235;
+}
+
+.dark {
+  --color-bg-primary: 3 7 18;
+  --color-bg-secondary: 17 24 39;
+  --color-text-primary: 255 255 255;
+  --color-text-secondary: 156 163 175;
+  --color-text-muted: 107 114 128;
+  --color-border: 55 65 81;
+  --color-border-hover: 75 85 99;
+
+  /* Prose colors for typography */
+  --tw-prose-body: 156 163 175;
+  --tw-prose-headings: 255 255 255;
+  --tw-prose-lead: 156 163 175;
+  --tw-prose-links: 59 130 246;
+  --tw-prose-bold: 255 255 255;
+  --tw-prose-counters: 156 163 175;
+  --tw-prose-bullets: 75 85 99;
+  --tw-prose-hr: 55 65 81;
+  --tw-prose-quotes: 255 255 255;
+  --tw-prose-quote-borders: 55 65 81;
+  --tw-prose-captions: 156 163 175;
+  --tw-prose-code: 255 255 255;
+  --tw-prose-pre-code: 209 213 219;
+  --tw-prose-pre-bg: 31 41 55;
+  --tw-prose-th-borders: 75 85 99;
+  --tw-prose-td-borders: 55 65 81;
+}
+
+body {
+  background-color: rgb(var(--color-bg-primary));
+  color: rgb(var(--color-text-primary));
+  font-family: 'Inter', sans-serif;
+  @apply antialiased;
+}
+
+/* Rainbow button animation */
+@keyframes rainbow {
+  0% {
+    background-position: 0%;
+  }
+  100% {
+    background-position: 200%;
+  }
+}
+
+.animate-rainbow {
+  animation: rainbow 2s infinite linear;
+}
+
+/* Rainbow button styles */
+.rainbow-button {
+  position: relative;
+  display: inline-flex;
+  height: 2.75rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 0;
+  background-size: 200%;
+  padding: 0.5rem 2rem;
+  font-weight: 500;
+  color: white;
+  transition: all 0.3s;
+  background-clip: padding-box, border-box, border-box;
+  background-origin: border-box;
+  border: calc(0.08 * 1rem) solid transparent;
+  
+  /* Light mode colors */
+  background: linear-gradient(#121213, #121213),
+              linear-gradient(#121213 50%, rgba(18, 18, 19, 0.6) 80%, rgba(18, 18, 19, 0)),
+              linear-gradient(90deg, hsl(var(--color-1)), hsl(var(--color-5)), hsl(var(--color-3)), hsl(var(--color-4)), hsl(var(--color-2)));
+}
+
+.dark .rainbow-button {
+  /* Dark mode colors */
+  background: linear-gradient(#fff, #fff),
+              linear-gradient(#fff 50%, rgba(255, 255, 255, 0.6) 80%, rgba(0, 0, 0, 0)),
+              linear-gradient(90deg, hsl(var(--color-1)), hsl(var(--color-5)), hsl(var(--color-3)), hsl(var(--color-4)), hsl(var(--color-2)));
+  color: #121213;
+}
+
+.rainbow-button::before {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: 50%;
+  z-index: 0;
+  height: 20%;
+  width: 60%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, hsl(var(--color-1)), hsl(var(--color-5)), hsl(var(--color-3)), hsl(var(--color-4)), hsl(var(--color-2)));
+  background-size: 200%;
+  filter: blur(calc(0.8 * 1rem));
+  animation: rainbow 2s infinite linear;
+}
+
+.rainbow-button:hover {
+  transform: translateY(-1px);
+}
+
+.rainbow-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: #F2F3F7;
+    @apply text-gray-900 dark:text-gray-100;
+    @apply antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  .dark body {
+    @apply bg-gray-950;
+  }
+  
+  /* Улучшенная типографика */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+  
+  /* Настройка скроллбара */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+}
+
+@layer components {
+  /* Кастомные компоненты */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg;
+    @apply bg-primary-600 hover:bg-primary-700 text-white;
+    @apply font-medium transition-colors duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply dark:focus:ring-offset-gray-900;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg;
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-900;
+    @apply dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-100;
+    @apply font-medium transition-colors duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    @apply dark:focus:ring-offset-gray-900;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-xl shadow-sm;
+    @apply border border-gray-200 dark:border-gray-800;
+    @apply transition-all duration-200;
+  }
+  
+  .card:hover {
+    @apply shadow-md border-gray-300 dark:border-gray-700;
+  }
+}
+
+@layer utilities {
+  /* Утилиты для производительности */
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .will-change-opacity {
+    will-change: opacity;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  /* Утилиты для текста */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  
+  /* Accessibility утилиты */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  .focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+  
+  /* Улучшенные focus состояния */
+  .focus-visible {
+    outline: 2px solid theme('colors.primary.500');
+    outline-offset: 2px;
+  }
+  
+  /* Высокий контраст для пользователей с нарушениями зрения */
+  @media (prefers-contrast: high) {
+    :root {
+      --color-text-primary: 0 0 0;
+      --color-bg-primary: 255 255 255;
+      --color-border: 0 0 0;
+    }
+    
+    .dark {
+      --color-text-primary: 255 255 255;
+      --color-bg-primary: 0 0 0;
+      --color-border: 255 255 255;
+    }
+  }
+  
+  /* Уменьшенная анимация для пользователей с вестибулярными нарушениями */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+} 

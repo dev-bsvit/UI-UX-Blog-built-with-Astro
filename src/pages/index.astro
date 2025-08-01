@@ -1,0 +1,284 @@
+---
+import { getCollection } from 'astro:content';
+import LayoutWithSidebar from '../layouts/LayoutWithSidebar.astro';
+import PostCard from '../components/PostCard.astro';
+
+// Отримуємо всі пости
+const allPosts = await getCollection('posts');
+
+// Сортуємо пости за датою (найновіші спочатку)
+const sortedPosts = allPosts.sort((a, b) => 
+  new Date(b.data.publishedAt).getTime() - new Date(a.data.publishedAt).getTime()
+);
+
+// Для вкладки "Популярне" (поки що просто беремо featured)
+const popularPosts = sortedPosts.filter(post => post.data.featured);
+---
+
+<LayoutWithSidebar
+  title="UI/UX Блог"
+  description="Сучасний блог про UI/UX дизайн, інтерфейси та користувацький досвід"
+  currentPath="/"
+>
+  <!-- Контент сторінки -->
+  <div>
+    <!-- Статті -->
+    <div class="grid grid-cols-1 gap-4">
+      {sortedPosts.map((post) => (
+        <PostCard
+          post={post}
+          featured={post.data.featured}
+        />
+      ))}
+    </div>
+  </div>
+</LayoutWithSidebar>
+
+<script client:load>
+  // Функция для показа уведомлений
+  function showNotification(message, isSuccess) {
+    if (isSuccess === undefined) isSuccess = true;
+    
+    // Создаем элемент уведомления
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 text-white';
+    
+    if (isSuccess) {
+      notification.classList.add('bg-green-500');
+    } else {
+      notification.classList.add('bg-red-500');
+    }
+    
+    const icon = document.createElement('svg');
+    icon.className = 'w-5 h-5';
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    
+    const path = document.createElement('path');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-width', '2');
+    
+    if (isSuccess) {
+      path.setAttribute('d', 'M5 13l4 4L19 7');
+    } else {
+      path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+    }
+    
+    icon.appendChild(path);
+    
+    const span = document.createElement('span');
+    span.textContent = message;
+    
+    notification.appendChild(icon);
+    notification.appendChild(span);
+    
+    document.body.appendChild(notification);
+    
+    // Удаляем уведомление через 3 секунды
+    setTimeout(function() {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
+  }
+
+  // Инициализация закладок
+  function initializeBookmarks() {
+    console.log('Initializing bookmarks...');
+    
+    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
+    console.log('Found bookmark buttons:', bookmarkButtons.length);
+    
+    bookmarkButtons.forEach(function(button) {
+      const postSlug = button.getAttribute('data-post-slug');
+      const bookmarkIcon = button.querySelector('.bookmark-icon');
+      const bookmarksCount = button.querySelector('.bookmarks-count');
+      
+      if (!bookmarkIcon || !bookmarksCount) {
+        console.warn('Bookmark elements not found for post:', postSlug);
+        return;
+      }
+      
+      console.log('Processing bookmark button for post:', postSlug);
+      
+      // Функция обновления состояния закладки
+      function updateBookmarkState() {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        
+        if (user) {
+          // Получаем персональные закладки пользователя
+          const userBookmarks = JSON.parse(localStorage.getItem('user_bookmarks_' + user.uid) || '[]');
+          const isBookmarked = userBookmarks.includes(postSlug);
+          
+          // Получаем общее количество закладок для этой статьи
+          const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+          const totalBookmarks = allBookmarks[postSlug] || 0;
+          
+          // Устанавливаем визуальное состояние
+          if (isBookmarked) {
+            bookmarkIcon.style.fill = '#3b82f6';
+            bookmarkIcon.style.stroke = '#3b82f6';
+            button.classList.add('bookmarked');
+          } else {
+            bookmarkIcon.style.fill = 'none';
+            bookmarkIcon.style.stroke = 'currentColor';
+            button.classList.remove('bookmarked');
+          }
+          
+          // Обновляем счетчик
+          bookmarksCount.textContent = totalBookmarks;
+        } else {
+          // Пользователь не авторизован
+          const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+          const totalBookmarks = allBookmarks[postSlug] || 0;
+          bookmarksCount.textContent = totalBookmarks;
+          
+          bookmarkIcon.style.fill = 'none';
+          bookmarkIcon.style.stroke = 'currentColor';
+          button.classList.remove('bookmarked');
+        }
+      }
+      
+      // Инициализируем состояние
+      updateBookmarkState();
+      
+      // Обработчик клика
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('Bookmark button clicked for post:', postSlug);
+        
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        
+        console.log('Current user:', user);
+        
+        if (!user) {
+          // Показываем уведомление о необходимости авторизации
+          console.log('User not authenticated, showing notification');
+          showNotification('Увійдіть, щоб додавати статті в закладки', false);
+          return;
+        }
+        
+        const userBookmarks = JSON.parse(localStorage.getItem('user_bookmarks_' + user.uid) || '[]');
+        const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+        const isCurrentlyBookmarked = userBookmarks.includes(postSlug);
+        
+        console.log('Before click:', {
+          postSlug: postSlug,
+          userBookmarks: userBookmarks,
+          allBookmarks: allBookmarks,
+          isCurrentlyBookmarked: isCurrentlyBookmarked
+        });
+        
+        let updatedUserBookmarks;
+        let updatedAllBookmarks = {};
+        Object.assign(updatedAllBookmarks, allBookmarks);
+        
+        if (isCurrentlyBookmarked) {
+          // Удаляем из закладок
+          updatedUserBookmarks = userBookmarks.filter(function(slug) {
+            return slug !== postSlug;
+          });
+          updatedAllBookmarks[postSlug] = Math.max(0, (updatedAllBookmarks[postSlug] || 0) - 1);
+          console.log('Removing from bookmarks:', updatedUserBookmarks);
+          showNotification('Статтю видалено з закладок');
+        } else {
+          // Добавляем в закладки
+          updatedUserBookmarks = userBookmarks.slice();
+          updatedUserBookmarks.push(postSlug);
+          updatedAllBookmarks[postSlug] = (updatedAllBookmarks[postSlug] || 0) + 1;
+          console.log('Adding to bookmarks:', updatedUserBookmarks);
+          showNotification('Статтю додано в закладки');
+        }
+        
+        // Сохраняем обновленные данные
+        localStorage.setItem('user_bookmarks_' + user.uid, JSON.stringify(updatedUserBookmarks));
+        localStorage.setItem('all_bookmarks', JSON.stringify(updatedAllBookmarks));
+        
+        console.log('After click:', {
+          userBookmarks: updatedUserBookmarks,
+          allBookmarks: updatedAllBookmarks
+        });
+        
+        // Обновляем состояние всех кнопок закладок на странице
+        updateAllBookmarkButtons();
+        
+        // Анимация
+        button.style.transform = 'scale(0.95)';
+        setTimeout(function() {
+          button.style.transform = 'scale(1)';
+        }, 150);
+      });
+
+      // Слушаем изменения авторизации
+      window.addEventListener('userAuthChanged', function(event) {
+        updateBookmarkState();
+      });
+    });
+  }
+
+  // Функция для обновления всех кнопок закладок на странице
+  function updateAllBookmarkButtons() {
+    console.log('Updating all bookmark buttons...');
+    
+    const bookmarkButtons = document.querySelectorAll('.bookmark-button');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    const allBookmarks = JSON.parse(localStorage.getItem('all_bookmarks') || '{}');
+    
+    console.log('Found bookmark buttons to update:', bookmarkButtons.length);
+    console.log('Current user:', user ? user.uid : 'null');
+    console.log('All bookmarks:', allBookmarks);
+    
+    bookmarkButtons.forEach(function(button) {
+      const postSlug = button.getAttribute('data-post-slug');
+      const bookmarkIcon = button.querySelector('.bookmark-icon');
+      const bookmarksCount = button.querySelector('.bookmarks-count');
+      
+      if (!bookmarkIcon || !bookmarksCount) {
+        console.warn('Bookmark elements not found for post:', postSlug);
+        return;
+      }
+      
+      if (user) {
+        const userBookmarks = JSON.parse(localStorage.getItem('user_bookmarks_' + user.uid) || '[]');
+        const isBookmarked = userBookmarks.includes(postSlug);
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        
+        console.log('Updating bookmark state:', {
+          postSlug: postSlug,
+          isBookmarked: isBookmarked,
+          userBookmarks: userBookmarks,
+          totalBookmarks: totalBookmarks
+        });
+        
+        if (isBookmarked) {
+          bookmarkIcon.style.fill = '#3b82f6';
+          bookmarkIcon.style.stroke = '#3b82f6';
+          button.classList.add('bookmarked');
+        } else {
+          bookmarkIcon.style.fill = 'none';
+          bookmarkIcon.style.stroke = 'currentColor';
+          button.classList.remove('bookmarked');
+        }
+        
+        bookmarksCount.textContent = totalBookmarks;
+      } else {
+        const totalBookmarks = allBookmarks[postSlug] || 0;
+        bookmarksCount.textContent = totalBookmarks;
+        
+        bookmarkIcon.style.fill = 'none';
+        bookmarkIcon.style.stroke = 'currentColor';
+        button.classList.remove('bookmarked');
+      }
+    });
+  }
+
+  // Инициализация функционала PostCard на главной странице
+  console.log('DOM already loaded - initializing immediately...');
+  initializeBookmarks();
+</script>
+
+ 
