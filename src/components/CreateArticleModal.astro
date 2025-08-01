@@ -156,6 +156,32 @@
       }
     };
 
+    // Функция для показа инструкций
+    function showArticleInstructions(result: any) {
+      if (resultContent) {
+        resultContent.innerHTML = `
+          <div class="text-green-600 dark:text-green-400">
+            <p class="font-medium">✅ ${result.message}</p>
+            <div class="mt-4">
+              <h4 class="font-medium mb-2">Інструкції:</h4>
+              <ol class="list-decimal list-inside text-sm space-y-1">
+                ${result.instructions.map((instruction: string) => `<li>${instruction}</li>`).join('')}
+              </ol>
+            </div>
+            <div class="mt-4 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+              <strong>Ім'я файлу:</strong> ${result.fileName}
+            </div>
+          </div>
+        `;
+      }
+      resultDiv?.classList.remove('hidden');
+      
+      // Закрываем модал через 5 секунд
+      setTimeout(() => {
+        closeModal();
+      }, 5000);
+    }
+
     // Функция для закрытия модала
     function closeModal() {
       if (modal) {
@@ -179,7 +205,7 @@
     // Обработка отправки формы
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const formData = new FormData(form as HTMLFormElement);
       const data = {
         title: formData.get('title') as string,
@@ -191,112 +217,85 @@
       };
 
       try {
-        console.log('Sending data to API:', data);
+        console.log('Creating article locally:', data);
 
-        // Отправляем данные на API endpoint
-        const response = await fetch('/api/posts/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data)
+        // Генерируем slug и время чтения
+        const slug = generateSlug(data.title) + '-' + Date.now();
+        const readingTime = calculateReadingTime(data.content);
+        
+        // Создаем frontmatter для MDX файла
+        const frontmatter = `---
+title: "${data.title}"
+description: "${data.excerpt || data.content.substring(0, 200).replace(/"/g, '\\"')}"
+publishedAt: ${new Date().toISOString()}
+author:
+  name: "Автор блогу"
+  bio: "Автор статей блогу"
+  avatar: "/logo.svg"
+excerpt: "${data.excerpt || data.content.substring(0, 200).replace(/"/g, '\\"')}"
+tags: [${data.tags ? data.tags.map((tag: string) => `"${tag}"`).join(', ') : ''}]
+category: "${data.category || 'Общее'}"
+readingTime: "${readingTime} хв читання"
+featured: false
+cover: "${data.coverImage || '/images/posts/default.png'}"
+draft: false
+---
+
+${data.content}`;
+
+        // Создаем и скачиваем файл
+        const blob = new Blob([frontmatter], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${slug}.mdx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Показываем инструкции
+        showArticleInstructions({
+          success: true,
+          fileCreated: false,
+          message: 'Файл статті готовий до завантаження',
+          slug,
+          fileName: `${slug}.mdx`,
+          instructions: [
+            '1. Файл автоматично завантажився на ваш комп\'ютер',
+            '2. Помістіть файл в папку src/content/posts/ вашого проекту',
+            '3. Зробіть commit і push в GitHub',
+            '4. Ваша стаття з\'явиться на сайті після деплою!',
+            '5. Не забудьте додати зображення в public/images/posts/ (якщо потрібно)'
+          ]
         });
 
-        const result = await response.json();
-        console.log('API response:', result);
-
-        if (response.ok && result.success) {
-          // Показываем результат
-          resultDiv?.classList.remove('hidden');
-          
-          if (result.filePath) {
-            // Файл успешно создан
-            if (resultContent) {
-              resultContent.innerHTML = `
-                <div class="text-green-600 dark:text-green-400">
-                  <p class="font-medium">✅ Статья успешно создана!</p>
-                  <p class="text-sm mt-2">Файл: ${result.filePath}</p>
-                  <p class="text-sm">Slug: ${result.slug}</p>
-                  <p class="text-sm mt-2 text-gray-600 dark:text-gray-400">
-                    Статья будет доступна после перезапуска сервера разработки.
-                  </p>
-                </div>
-              `;
-            }
-            
-            // Закрываем модал через 3 секунды
-            setTimeout(() => {
-              closeModal();
-              // Перезагружаем страницу для отображения новой статьи
-              window.location.reload();
-            }, 3000);
-            
-          } else if (result.downloadContent) {
-            // Показываем контент для скачивания
-            if (resultContent) {
-              resultContent.innerHTML = `
-                <div class="text-blue-600 dark:text-blue-400">
-                  <p class="font-medium">📄 Статья подготовлена для скачивания</p>
-                  <div class="mt-4">
-                    <h4 class="font-medium mb-2">Инструкции:</h4>
-                    <ol class="list-decimal list-inside text-sm space-y-1">
-                      ${result.instructions.map((instruction: string) => `<li>${instruction}</li>`).join('')}
-                    </ol>
-                  </div>
-                  <div class="mt-4">
-                    <button onclick="downloadFile('${result.fileName}', \`${result.downloadContent.replace(/`/g, '\\`')}\`)" 
-                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                      Скачать файл
-                    </button>
-                  </div>
-                  <details class="mt-4">
-                    <summary class="cursor-pointer text-sm text-gray-600 dark:text-gray-400">Показать содержимое файла</summary>
-                    <pre class="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded text-xs overflow-x-auto">${result.downloadContent}</pre>
-                  </details>
-                </div>
-              `;
-            }
-          }
-        } else {
-          // Показываем ошибку
-          if (resultContent) {
-            resultContent.innerHTML = `
-              <div class="text-red-600 dark:text-red-400">
-                <p class="font-medium">❌ Ошибка при создании статьи</p>
-                <p class="text-sm mt-2">${result.error || 'Неизвестная ошибка'}</p>
-              </div>
-            `;
-          }
-          resultDiv?.classList.remove('hidden');
-        }
-
       } catch (error) {
-        console.error('Error submitting form:', error);
-        if (resultContent) {
-          resultContent.innerHTML = `
-            <div class="text-red-600 dark:text-red-400">
-              <p class="font-medium">❌ Ошибка отправки</p>
-              <p class="text-sm mt-2">Проверьте подключение к интернету и попробуйте снова.</p>
-            </div>
-          `;
+        console.error('Error creating article:', error);
+        if (window.showNotification) {
+          window.showNotification('Помилка при створенні статті', false);
+        } else {
+          alert('Помилка при створенні статті');
         }
-        resultDiv?.classList.remove('hidden');
       }
     });
 
-    // Функция для скачивания файла
-    window.downloadFile = function(filename: string, content: string) {
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    };
-  });
+    // Функции для генерации slug и времени чтения
+    function generateSlug(title: string): string {
+      return title
+        .toLowerCase()
+        .replace(/[^a-z0-9\u0400-\u04ff\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim()
+        .slice(0, 50);
+    }
+
+    function calculateReadingTime(content: string): number {
+      const wordsPerMinute = 200;
+      const words = content.split(/\s+/).length;
+      return Math.ceil(words / wordsPerMinute);
+    }
 </script>
 
 <style>
