@@ -225,58 +225,88 @@
 </div>
 
 <script>
-  // Открытие модального окна
-  const openModalBtn = document.getElementById('open-create-modal');
-  const openModalMobileBtn = document.getElementById('open-create-modal-mobile');
-  const modal = document.getElementById('create-article-modal');
-  const closeModalBtn = document.getElementById('close-modal');
-  const cancelBtn = document.getElementById('cancel-article');
-  const form = document.getElementById('article-form');
-  const notification = document.getElementById('notification');
-  const notificationMessage = document.getElementById('notification-message');
-
-  // Функция для открытия модального окна
-  function openModal() {
-    // Проверяем авторизацию
-    const user = localStorage.getItem('user');
-    if (!user) {
-      alert('Для публікації статей потрібно увійти в систему через Google');
-      return;
-    }
+  // Ждем полной загрузки DOM
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing modal');
     
-    if (modal) {
-      modal.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+    // Открытие модального окна
+    const openModalBtn = document.getElementById('open-create-modal');
+    const openModalMobileBtn = document.getElementById('open-create-modal-mobile');
+    const modal = document.getElementById('create-article-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    const cancelBtn = document.getElementById('cancel-article');
+    const form = document.getElementById('article-form');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+
+    console.log('Modal elements found:', {
+      openModalBtn: !!openModalBtn,
+      openModalMobileBtn: !!openModalMobileBtn,
+      modal: !!modal,
+      closeModalBtn: !!closeModalBtn,
+      cancelBtn: !!cancelBtn,
+      form: !!form
+    });
+
+    // Функция для открытия модального окна
+    function openModal() {
+      console.log('openModal called');
+      
+      // Проверяем авторизацию
+      const user = localStorage.getItem('user');
+      console.log('User from localStorage:', user);
+      
+      if (!user) {
+        alert('Для публікації статей потрібно увійти в систему через Google');
+        return;
+      }
+      
+      if (modal) {
+        console.log('Opening modal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      } else {
+        console.error('Modal element not found');
+      }
     }
-  }
 
-  // Открыть модальное окно (десктоп и мобильная кнопки)
-  openModalBtn?.addEventListener('click', openModal);
-  openModalMobileBtn?.addEventListener('click', openModal);
+    // Открыть модальное окно (десктоп и мобильная кнопки)
+    openModalBtn?.addEventListener('click', (e) => {
+      console.log('Desktop button clicked');
+      e.preventDefault();
+      openModal();
+    });
+    
+    openModalMobileBtn?.addEventListener('click', (e) => {
+      console.log('Mobile button clicked');
+      e.preventDefault();
+      openModal();
+    });
 
-  // Закрыть модальное окно
-  function closeModal() {
-    modal?.classList.add('hidden');
-    document.body.style.overflow = 'auto';
-    form?.reset();
-  }
-
-  closeModalBtn?.addEventListener('click', closeModal);
-  cancelBtn?.addEventListener('click', closeModal);
-
-  // Закрытие по клику вне модального окна
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      closeModal();
+    // Закрыть модальное окно
+    function closeModal() {
+      console.log('closeModal called');
+      modal?.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+      form?.reset();
     }
-  });
 
-  // Закрытие по Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modal?.classList.contains('hidden')) {
-      closeModal();
-    }
-  });
+    closeModalBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+
+    // Закрытие по клику вне модального окна
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Закрытие по Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal?.classList.contains('hidden')) {
+        closeModal();
+      }
+    });
 
   // Показать уведомление
   function showNotification(message, isSuccess = true) {
@@ -423,6 +453,7 @@ ${data.content}
       reader.readAsDataURL(file);
     }
   });
+  }); // Закрывающая скобка для DOMContentLoaded
 </script>
 
 <style>
